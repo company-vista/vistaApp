@@ -1,0 +1,155 @@
+import { StyleSheet } from "react-native";
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
+  header: {
+    minHeight: 86,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    paddingHorizontal: 22,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 18,
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 20,
+    fontWeight: '400',
+  },
+  list: {
+    paddingTop: 15,
+  },
+  itemRow: {
+    minHeight: 68,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 25,
+    // backgroundColor: '#ffffff',
+  },
+
+  itemIcon: {
+    width: 26,
+    alignItems: 'center',
+    marginRight: 20,
+  },
+  itemCopy: {
+    flex: 1,
+  },
+  itemTitle: {
+    fontSize: 16,
+    fontWeight: '400',
+  },
+  itemSubtitle: {
+    fontSize: 14,
+    fontWeight: '400',
+    marginTop: 2,
+  },
+  feedbackHeader: {
+    minHeight: 66,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    paddingHorizontal: 14,
+  },
+  feedbackBackButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  feedbackHeaderTitle: {
+    flex: 1,
+    fontSize: 20,
+    fontWeight: '400',
+  },
+  feedbackContent: {
+    flex: 1,
+    paddingHorizontal: 28,
+    paddingTop: 18,
+  },
+  feedbackHelpText: {
+    fontSize: 14,
+    lineHeight: 24,
+  },
+  linkText: {
+    fontWeight: '700',
+  },
+  issueInput: {
+    minHeight: 140,
+    borderWidth: 0.3,
+    borderRadius: 10,
+    fontSize: 14,
+    lineHeight: 24,
+    marginTop: 40,
+    paddingHorizontal: 10,
+    paddingTop: 10,
+    paddingBottom: 18,
+  },
+  mediaSection: {
+    marginTop: 46,
+  },
+  mediaTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 23,
+  },
+  mediaSubtitle: {
+    fontSize: 14,
+    lineHeight: 23,
+    marginTop: 2,
+  },
+  addMediaButton: {
+    width: 90,
+    height: 90,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 3,
+    borderWidth: StyleSheet.hairlineWidth,
+    marginTop: 18,
+    overflow: 'hidden',
+  },
+  selectedMediaPreview: {
+    width: '100%',
+    height: '100%',
+  },
+  plusBadge: {
+    position: 'absolute',
+    right: -5,
+    top: -7,
+    width: 17,
+    height: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 9,
+    borderWidth: 2,
+  },
+  footer: {
+    paddingHorizontal: 28,
+    paddingTop: 10,
+  },
+  footerText: {
+    fontSize: 14,
+    lineHeight: 22,
+  },
+  sendButton: {
+    minHeight: 43,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 29,
+    marginTop: 20,
+  },
+  sendButtonText: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+});
+
+export default styles
