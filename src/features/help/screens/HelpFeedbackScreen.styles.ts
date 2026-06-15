@@ -8,15 +8,9 @@ const styles = StyleSheet.create({
     minHeight: 86,
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
     borderBottomWidth: 1,
     paddingHorizontal: 22,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 18,
   },
   headerTitle: {
     flex: 1,
@@ -30,6 +24,7 @@ const styles = StyleSheet.create({
     minHeight: 68,
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 14,
     paddingHorizontal: 25,
     // backgroundColor: '#ffffff',
   },
@@ -37,7 +32,6 @@ const styles = StyleSheet.create({
   itemIcon: {
     width: 26,
     alignItems: 'center',
-    marginRight: 20,
   },
   itemCopy: {
     flex: 1,
@@ -55,15 +49,9 @@ const styles = StyleSheet.create({
     minHeight: 66,
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
     borderBottomWidth: 1,
     paddingHorizontal: 14,
-  },
-  feedbackBackButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
   },
   feedbackHeaderTitle: {
     flex: 1,
@@ -149,6 +137,69 @@ const styles = StyleSheet.create({
   sendButtonText: {
     fontSize: 18,
     fontWeight: '700',
+  },
+  appInfoContent: {
+    paddingHorizontal: 22,
+    paddingTop: 22,
+  },
+  appInfoCard: {
+    alignItems: 'center',
+    borderRadius: 18,
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 20,
+    paddingVertical: 28,
+  },
+  appInfoIcon: {
+    width: 66,
+    height: 66,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 33,
+    backgroundColor: '#ccfbf1',
+    overflow: 'hidden',
+  },
+  appInfoLogo: {
+    width: '100%',
+    height: '100%',
+  },
+  appInfoTitle: {
+    color: '#111827',
+    fontSize: 21,
+    fontWeight: '500',
+    marginTop: 16,
+  },
+  appInfoSubtitle: {
+    color: '#64748b',
+    fontSize: 13,
+    fontWeight: '400',
+    marginTop: 5,
+  },
+  appInfoList: {
+    borderRadius: 18,
+    backgroundColor: '#ffffff',
+    marginTop: 18,
+    paddingHorizontal: 16,
+  },
+  appInfoRow: {
+    minHeight: 62,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  appInfoLabel: {
+    color: '#64748b',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  appInfoValue: {
+    flex: 1,
+    color: '#111827',
+    fontSize: 14,
+    fontWeight: '400',
+    textAlign: 'right',
   },
 });
 

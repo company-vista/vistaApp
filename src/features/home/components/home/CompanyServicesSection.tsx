@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 import { useThemeColors } from '../../../../theme/colors';
@@ -7,21 +7,18 @@ import styles from './CompanyServicesSection.styles';
 const services = [
   {
     title: 'Documents',
-    subtitle: 'Manage company files and records',
     icon: 'file-text-o',
-    color: '#fff4d8',
+    color: '#38bdf8',
   },
   {
     title: 'Compliance',
-    subtitle: 'Track filings and due dates',
     icon: 'check-square-o',
-    color: '#e8faec',
+    color: '#22c55e',
   },
   {
     title: 'Invoices',
-    subtitle: 'View billing and payments',
     icon: 'credit-card',
-    color: '#eef4ff',
+    color: '#4f7cff',
   },
 ];
 
@@ -31,35 +28,23 @@ function CompanyServicesSection() {
   return (
     <>
       <Text style={[styles.sectionTitle, { color: colors.text }]}>Company Services</Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.horizontalList}>
+      <View style={styles.servicesGrid}>
         {services.map(service => (
           <Pressable
             key={service.title}
-            style={[styles.serviceCard, { backgroundColor: colors.surface }]}>
-            <View style={styles.serviceTop}>
-              <View style={styles.serviceCopy}>
-                <Text style={[styles.serviceTitle, { color: colors.text }]}>
-                  {service.title}
-                </Text>
-                <Text style={[styles.serviceSubtitle, { color: colors.muted }]}>
-                  {service.subtitle}
-                </Text>
-              </View>
-              <FontAwesome name="external-link" size={20} color={colors.text} />
-            </View>
-            <View style={[styles.serviceIconWrap, { backgroundColor: service.color }]}>
-              <FontAwesome name={service.icon} size={25} color="#0f766e" />
-            </View>
+            style={[
+              styles.serviceCard,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}>
+            <FontAwesome name={service.icon} size={24} color={service.color} />
+            <Text style={[styles.serviceTitle, { color: colors.text }]}>
+              {service.title}
+            </Text>
           </Pressable>
         ))}
-      </ScrollView>
+      </View>
     </>
   );
 }
-
-
 
 export default CompanyServicesSection;

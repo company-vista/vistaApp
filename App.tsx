@@ -20,8 +20,11 @@ import BusinessReportsScreen from './src/features/home/screens/quickAccess/Busin
 import CompanyProfileScreen from './src/features/home/screens/quickAccess/CompanyProfileScreen';
 import HelpDeskScreen from './src/features/home/screens/quickAccess/HelpDeskScreen';
 import InvoiceCenterScreen from './src/features/home/screens/quickAccess/InvoiceCenterScreen';
+import InvoiceDetailScreen from './src/features/home/screens/InvoiceDetailScreen';
+import NotificationDetailScreen from './src/features/notifications/screens/NotificationDetailScreen';
 import NotificationScreen from './src/features/notifications/screens/NotificationScreen';
 import EditProfileScreen from './src/features/profile/screens/EditProfileScreen';
+import ProfileAddressScreen from './src/features/profile/screens/ProfileAddressScreen';
 import ProfileScreen from './src/features/profile/screens/ProfileScreen';
 import SignupScreen from './src/features/auth/screens/SignupScreen';
 import logoImage from './src/assets/images/logoR.png';
@@ -30,6 +33,7 @@ import { restoreAuth } from './src/store/slices/authSlice';
 import { store } from './src/store';
 import { useThemeColors } from './src/theme/colors';
 import type { QuickAccessItemId } from './src/features/home/data/quickAccessItems';
+import type { NotificationItem } from './src/features/notifications/data/notifications';
 
 type AuthScreen = 'login' | 'signup';
 type AppScreen =
@@ -38,8 +42,11 @@ type AppScreen =
   | 'followUs'
   | 'helpFeedback'
   | 'home'
+  | 'invoiceDetail'
+  | 'notificationDetail'
   | 'notifications'
   | 'profile'
+  | 'profileAddress'
   | `quickAccess:${QuickAccessItemId}`
   | 'quickAccess';
 
@@ -75,8 +82,13 @@ function AppContent() {
   const [showSplash, setShowSplash] = useState(true);
   const [appScreen, setAppScreen] = useState<AppScreen>('home');
   const [authScreen, setAuthScreen] = useState<AuthScreen>('login');
+  const [selectedNotification, setSelectedNotification] =
+    useState<NotificationItem | null>(null);
+  const [selectedInvoice, setSelectedInvoice] =
+    useState<Record<string, unknown> | null>(null);
   const [quickAccessBackScreen, setQuickAccessBackScreen] =
     useState<'home' | 'quickAccess'>('home');
+  const [homeInitialTab, setHomeInitialTab] = useState<'home' | 'company' | 'reports' | 'billing' | 'more'>('home');
   const authFadeAnim = useRef(new Animated.Value(1)).current;
   const authSlideAnim = useRef(new Animated.Value(0)).current;
 
@@ -86,6 +98,16 @@ function AppContent() {
   ) {
     setQuickAccessBackScreen(backScreen);
     setAppScreen(`quickAccess:${itemId}`);
+  }
+
+  function openNotificationDetail(notification: NotificationItem) {
+    setSelectedNotification(notification);
+    setAppScreen('notificationDetail');
+  }
+
+  function openInvoiceDetail(invoice: Record<string, unknown>) {
+    setSelectedInvoice(invoice);
+    setAppScreen('invoiceDetail');
   }
 
   useEffect(() => {
@@ -135,19 +157,34 @@ function AppContent() {
         <SplashScreen />
       ) : isAuthenticated && appScreen === 'home' ? (
         <HomeScreen
+          initialTab={homeInitialTab}
           onFollowUsPress={() => setAppScreen('followUs')}
           onHelpFeedbackPress={() => setAppScreen('helpFeedback')}
+          onInvoicePress={openInvoiceDetail}
           onNotificationPress={() => setAppScreen('notifications')}
           onProfilePress={() => setAppScreen('profile')}
           onQuickAccessItemPress={itemId => openQuickAccessItem(itemId, 'home')}
           onQuickAccessViewAllPress={() => setAppScreen('quickAccess')}
+        />
+      ) : isAuthenticated && appScreen === 'invoiceDetail' && selectedInvoice ? (
+        <InvoiceDetailScreen
+          invoice={selectedInvoice}
+          onBackPress={() => { setHomeInitialTab('billing'); setAppScreen('home'); }}
         />
       ) : isAuthenticated && appScreen === 'helpFeedback' ? (
         <HelpFeedbackScreen onBackPress={() => setAppScreen('home')} />
       ) : isAuthenticated && appScreen === 'followUs' ? (
         <FollowUsScreen onBackPress={() => setAppScreen('home')} />
       ) : isAuthenticated && appScreen === 'notifications' ? (
-        <NotificationScreen onBackPress={() => setAppScreen('home')} />
+        <NotificationScreen
+          onBackPress={() => setAppScreen('home')}
+          onNotificationPress={openNotificationDetail}
+        />
+      ) : isAuthenticated && appScreen === 'notificationDetail' && selectedNotification ? (
+        <NotificationDetailScreen
+          notification={selectedNotification}
+          onBackPress={() => setAppScreen('notifications')}
+        />
       ) : isAuthenticated && appScreen === 'quickAccess' ? (
         <QuickAccessScreen
           onBackPress={() => setAppScreen('home')}
@@ -163,9 +200,12 @@ function AppContent() {
         <HelpDeskScreen onBackPress={() => setAppScreen(quickAccessBackScreen)} />
       ) : isAuthenticated && appScreen === 'profile' ? (
         <ProfileScreen
+          onAddressPress={() => setAppScreen('profileAddress')}
           onBackPress={() => setAppScreen('home')}
           onEditPress={() => setAppScreen('editProfile')}
         />
+      ) : isAuthenticated && appScreen === 'profileAddress' ? (
+        <ProfileAddressScreen onBackPress={() => setAppScreen('profile')} />
       ) : isAuthenticated && appScreen === 'editProfile' ? (
         <EditProfileScreen onBackPress={() => setAppScreen('profile')} />
       ) : (
@@ -233,16 +273,6 @@ function SplashScreen() {
         ]}>
         <Image source={logoImage} style={styles.logoImage} />
       </Animated.View>
-      {/* <Animated.Text
-        style={[
-          styles.appName,
-          {
-            opacity: fadeAnim,
-            transform: [{ translateY: riseAnim }],
-          },
-        ]}>
-        Company Vista
-      </Animated.Text> */}
     </View>
   );
 }

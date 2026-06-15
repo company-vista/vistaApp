@@ -20,9 +20,6 @@ function QuickAccessSection({
     <>
       <View style={styles.sectionHeader}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Quick Access</Text>
-        <Pressable onPress={onViewAllPress} style={styles.viewAllButton}>
-          <Text style={[styles.viewAllText, { color: colors.danger }]}>View all</Text>
-        </Pressable>
       </View>
       <View style={styles.favouritesGrid}>
         {visibleItems.map(item => (
@@ -33,7 +30,9 @@ function QuickAccessSection({
               styles.favouriteCard,
               { backgroundColor: colors.surface, borderColor: colors.border },
             ]}>
-            <FontAwesome name={item.icon} size={24} color={item.color} />
+            <View style={[styles.iconCircle, { backgroundColor: item.color + '18' }]}>
+              <FontAwesome name={item.icon} size={22} color={item.color} />
+            </View>
             <Text style={[styles.favouriteTitle, { color: colors.text }]}>
               {item.title}
             </Text>
@@ -79,16 +78,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#d8b4fe',
     borderRadius: 12,
-    backgroundColor: '#ffffff',
     padding: 10,
   },
+  iconCircle: {
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 24,
+  },
   favouriteTitle: {
-    color: '#111827',
-    fontSize: 14,
-    fontWeight: '800',
-    lineHeight: 19,
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 18,
     marginTop: 8,
     textAlign: 'center',
   },

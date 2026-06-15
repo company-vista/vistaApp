@@ -5,7 +5,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -15,6 +14,8 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { launchImageLibrary } from 'react-native-image-picker';
 import styles from './HelpFeedbackScreen.styles';
 
+import logoImage from '../../../assets/images/logo.jpg';
+import { BackButton } from '../../../components/buttons';
 import { useThemeColors } from '../../../theme/colors';
 
 type HelpFeedbackScreenProps = {
@@ -46,12 +47,20 @@ const helpItems = [
   },
 ];
 
+const appInfoItems = [
+  { label: 'App name', value: 'Company Vista' },
+  { label: 'Version', value: '0.0.1' },
+  { label: 'Platform', value: Platform.OS === 'ios' ? 'iOS' : 'Android' },
+  { label: 'React Native', value: '0.85.3' },
+  { label: 'Support', value: 'support@companyvista.com' },
+];
+
 function HelpFeedbackScreen({ onBackPress }: HelpFeedbackScreenProps) {
   const safeAreaInsets = useSafeAreaInsets();
   const colors = useThemeColors();
-  const [activePage, setActivePage] = useState<'helpList' | 'sendFeedback'>(
-    'helpList',
-  );
+  const [activePage, setActivePage] = useState<
+    'appInfo' | 'helpList' | 'sendFeedback'
+  >('helpList');
   const [feedback, setFeedback] = useState('');
   const [selectedMediaUri, setSelectedMediaUri] = useState<string | null>(null);
   const canSend = feedback.trim().length > 0;
@@ -112,11 +121,7 @@ function HelpFeedbackScreen({ onBackPress }: HelpFeedbackScreenProps) {
             styles.feedbackHeader,
             { borderBottomColor: colors.border },
           ]}>
-          <Pressable
-            onPress={() => setActivePage('helpList')}
-            style={styles.feedbackBackButton}>
-            <FontAwesome name="arrow-left" size={22} color={colors.text} />
-          </Pressable>
+          <BackButton onPress={() => setActivePage('helpList')} />
           <Text style={[styles.feedbackHeaderTitle, { color: colors.text }]}>
             Send feedback
           </Text>
@@ -224,6 +229,59 @@ function HelpFeedbackScreen({ onBackPress }: HelpFeedbackScreenProps) {
     );
   }
 
+  if (activePage === 'appInfo') {
+    return (
+      <View
+        style={[
+          styles.screen,
+          {
+            backgroundColor: colors.background,
+            paddingTop: safeAreaInsets.top,
+          },
+        ]}>
+        <View
+          style={[
+            styles.feedbackHeader,
+            { borderBottomColor: colors.border },
+          ]}>
+          <BackButton onPress={() => setActivePage('helpList')} />
+          <Text style={[styles.feedbackHeaderTitle, { color: colors.text }]}>
+            App info
+          </Text>
+        </View>
+
+        <View style={styles.appInfoContent}>
+          <View style={[styles.appInfoCard, { backgroundColor: colors.surface }]}>
+            <View style={[styles.appInfoIcon, { backgroundColor: colors.accentSoft }]}>
+              <Image source={logoImage} style={styles.appInfoLogo} />
+            </View>
+            <Text style={[styles.appInfoTitle, { color: colors.text }]}>
+              Company Vista
+            </Text>
+            <Text style={[styles.appInfoSubtitle, { color: colors.muted }]}>
+              Client Portal Application
+            </Text>
+          </View>
+
+          <View style={[styles.appInfoList, { backgroundColor: colors.surface }]}>
+            {appInfoItems.map(item => (
+              <View
+                key={item.label}
+                style={[styles.appInfoRow, { borderBottomColor: colors.border }]}>
+                <Text style={[styles.appInfoLabel, { color: colors.muted }]}>
+                  {item.label}
+                </Text>
+                <Text style={[styles.appInfoValue, { color: colors.text }]}>
+                  {item.value}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View
       style={[
@@ -231,9 +289,7 @@ function HelpFeedbackScreen({ onBackPress }: HelpFeedbackScreenProps) {
         { backgroundColor: colors.background, paddingTop: safeAreaInsets.top },
       ]}>
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <Pressable onPress={onBackPress} style={styles.backButton}>
-          <FontAwesome name="arrow-left" size={20} color={colors.text} />
-        </Pressable>
+        <BackButton onPress={onBackPress} />
         <Text style={[styles.headerTitle, { color: colors.text }]}>
           Help and feedback
         </Text>
@@ -243,11 +299,16 @@ function HelpFeedbackScreen({ onBackPress }: HelpFeedbackScreenProps) {
         {helpItems.map(item => (
           <Pressable
             key={item.title}
-            onPress={
-              item.title === 'Send feedback'
-                ? () => setActivePage('sendFeedback')
-                : undefined
-            }
+            onPress={() => {
+              if (item.title === 'Send feedback') {
+                setActivePage('sendFeedback');
+                return;
+              }
+
+              if (item.title === 'App info') {
+                setActivePage('appInfo');
+              }
+            }}
             style={styles.itemRow}>
             <View style={styles.itemIcon}>
               <FontAwesome name={item.icon} size={25} color={colors.muted} />
@@ -262,6 +323,7 @@ function HelpFeedbackScreen({ onBackPress }: HelpFeedbackScreenProps) {
                 </Text>
               ) : null}
             </View>
+            <FontAwesome name="angle-right" size={22} color={colors.subtle} />
           </Pressable>
         ))}
       </View>

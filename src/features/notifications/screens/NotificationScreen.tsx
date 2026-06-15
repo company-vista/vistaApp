@@ -1,65 +1,181 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
-import { notifications } from '../data/notifications';
+import { BackButton } from '../../../components/buttons';
+import NotificationPageSkeleton from '../../../notification/NotificationPageSkeleton';
+import type { NotificationItem } from '../data/notifications';
+import { fetchNotifications } from '../api/notificationsApi';
+import { useAppSelector } from '../../../store/hooks';
 import { useThemeColors } from '../../../theme/colors';
 
-const hasNotifications = notifications.length > 0;
+const notificationFilters = ['All', 'Unread', 'Read'] as const;
+
+type NotificationFilter = (typeof notificationFilters)[number];
+
+function getBadgeCount(count: number) {
+  return count > 9 ? '9+' : String(count);
+}
 
 type NotificationScreenProps = {
   onBackPress: () => void;
+  onNotificationPress: (notification: NotificationItem) => void;
 };
 
-function NotificationScreen({ onBackPress }: NotificationScreenProps) {
+function NotificationScreen({
+  onBackPress,
+  onNotificationPress,
+}: NotificationScreenProps) {
   const safeAreaInsets = useSafeAreaInsets();
   const colors = useThemeColors();
+  const token = useAppSelector(state => state.auth.token);
+  const [activeFilter, setActiveFilter] = useState<NotificationFilter>('All');
+  const [notificationList, setNotificationList] = useState<NotificationItem[]>([]);
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(true);
+  const hasNotifications = notificationList.length > 0;
+  const filteredNotifications = useMemo(() => {
+    if (activeFilter === 'Unread') {
+      return notificationList.filter(item => !item.isRead);
+    }
+
+    if (activeFilter === 'Read') {
+      return notificationList.filter(item => item.isRead);
+    }
+
+    return notificationList;
+  }, [activeFilter, notificationList]);
+  const notificationFilterCounts = useMemo(
+    () => ({
+      All: notificationList.length,
+      Read: notificationList.filter(item => item.isRead).length,
+      Unread: notificationList.filter(item => !item.isRead).length,
+    }),
+    [notificationList],
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+
+    setIsLoadingNotifications(true);
+
+    fetchNotifications({ token }).then(result => {
+      if (isMounted && result.isSuccess) {
+        setNotificationList(result.notifications);
+      }
+    }).finally(() => {
+      if (isMounted) {
+        setIsLoadingNotifications(false);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [token]);
 
   return (
-    <View
+    <ScrollView
+      contentContainerStyle={[
+        styles.scrollContent,
+        { paddingBottom: safeAreaInsets.bottom + 24 },
+      ]}
       style={[
         styles.screen,
         { backgroundColor: colors.background, paddingTop: safeAreaInsets.top + 22 },
       ]}>
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Pressable
-            onPress={onBackPress}
-            style={[styles.backButton, { backgroundColor: colors.surface }]}>
-            <FontAwesome name="arrow-left" size={18} color={colors.text} />
-          </Pressable>
+          <BackButton onPress={onBackPress} />
           <Text style={[styles.title, { color: colors.text }]}>Notifications</Text>
         </View>
         {hasNotifications ? (
           <View style={styles.countBadge}>
-            <Text style={styles.countText}>{notifications.length}</Text>
+            <Text style={styles.countText}>{getBadgeCount(notificationList.length)}</Text>
           </View>
         ) : null}
       </View>
 
-      {hasNotifications ? (
-        <View style={[styles.listCard, { backgroundColor: colors.surface }]}>
-          {notifications.map(item => (
-            <View
-              key={item.title}
-              style={[styles.notificationRow, { borderBottomColor: colors.border }]}>
-              <View style={[styles.notificationIcon, { backgroundColor: colors.surfaceAlt }]}>
-                <FontAwesome name={item.icon} size={18} color={colors.accent} />
-              </View>
-              <View style={styles.notificationCopy}>
-                <Text style={[styles.notificationTitle, { color: colors.text }]}>
-                  {item.title}
-                </Text>
-                <Text style={[styles.notificationMessage, { color: colors.muted }]}>
-                  {item.message}
-                </Text>
-                <Text style={[styles.notificationTime, { color: colors.subtle }]}>
-                  {item.time}
-                </Text>
-              </View>
+      {isLoadingNotifications ? (
+        <NotificationPageSkeleton />
+      ) : hasNotifications ? (
+        <>
+          <View style={styles.filterRow}>
+            {notificationFilters.map(filter => {
+              const isActive = activeFilter === filter;
+
+              return (
+                <Pressable
+                  key={filter}
+                  onPress={() => setActiveFilter(filter)}
+                  style={[
+                    styles.filterButton,
+                    isActive ? styles.activeFilterButton : null,
+                  ]}>
+                  <Text
+                    style={[
+                      styles.filterButtonText,
+                      { color: colors.text },
+                      isActive ? styles.activeFilterButtonText : null,
+                    ]}>
+                    {filter} ({notificationFilterCounts[filter]})
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          {filteredNotifications.length > 0 ? (
+            <View style={[styles.listCard, { backgroundColor: colors.surface }]}>
+              {filteredNotifications.map(item => (
+                <Pressable
+                  key={item.id}
+                  onPress={() => onNotificationPress(item)}
+                  style={[styles.notificationRow, { borderBottomColor: colors.border }]}>
+                  <View
+                    style={[
+                      styles.notificationIcon,
+                      { backgroundColor: colors.surfaceAlt },
+                    ]}>
+                    <FontAwesome name={item.icon} size={18} color={colors.accent} />
+                  </View>
+                  <View style={styles.notificationCopy}>
+                    <View style={styles.notificationTitleRow}>
+                      <Text style={[styles.notificationTitle, { color: colors.text }]}>
+                        {item.title}
+                      </Text>
+                      {!item.isRead ? <View style={styles.unreadDot} /> : null}
+                    </View>
+                    <Text style={[styles.notificationMessage, { color: colors.muted }]}>
+                      {item.message}
+                    </Text>
+                    <Text style={[styles.notificationTime, { color: colors.subtle }]}>
+                      {item.time}
+                    </Text>
+                  </View>
+                </Pressable>
+              ))}
             </View>
-          ))}
-        </View>
+          ) : (
+            <View style={[styles.emptyCard, { backgroundColor: colors.surface }]}>
+              <View style={[styles.emptyIcon, { backgroundColor: colors.surfaceAlt }]}>
+                <FontAwesome name="bell-o" size={30} color={colors.accent} />
+              </View>
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>
+                No {activeFilter.toLowerCase()} notifications
+              </Text>
+              <Text style={[styles.emptyText, { color: colors.muted }]}>
+                Matching notifications will appear here.
+              </Text>
+            </View>
+          )}
+        </>
       ) : (
         <View style={[styles.emptyCard, { backgroundColor: colors.surface }]}>
           <View style={[styles.emptyIcon, { backgroundColor: colors.surfaceAlt }]}>
@@ -71,7 +187,7 @@ function NotificationScreen({ onBackPress }: NotificationScreenProps) {
           </Text>
         </View>
       )}
-    </View>
+    </ScrollView>
   );
 }
 
@@ -79,6 +195,8 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: '#f8fafc',
+  },
+  scrollContent: {
     paddingHorizontal: 20,
   },
   header: {
@@ -91,18 +209,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 20,
-    backgroundColor: '#ffffff',
-  },
   title: {
     color: '#111827',
-    fontSize: 22,
-    fontWeight: '500',
+    fontSize: 20,
+    fontWeight: '400',
   },
   countBadge: {
     minWidth: 34,
@@ -115,13 +225,39 @@ const styles = StyleSheet.create({
   countText: {
     color: '#ffffff',
     fontSize: 14,
-    fontWeight: '900',
+    fontWeight: '500',
+  },
+  filterRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 24,
+  },
+  filterButton: {
+    minHeight: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 10,
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 18,
+  },
+  activeFilterButton: {
+    borderColor: '#1d4fd89d',
+  },
+  filterButtonText: {
+    color: '#111827',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  activeFilterButtonText: {
+    color: '#2563eb',
   },
   listCard: {
     borderRadius: 18,
     backgroundColor: '#ffffff',
-    marginTop: 24,
-    paddingHorizontal: 16,
+    marginTop: 16,
+    paddingHorizontal: 14,
   },
   emptyCard: {
     alignItems: 'center',
@@ -171,15 +307,27 @@ const styles = StyleSheet.create({
   notificationCopy: {
     flex: 1,
   },
+  notificationTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   notificationTitle: {
     color: '#111827',
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '400',
+    flex: 1,
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#ef4444',
   },
   notificationMessage: {
     color: '#64748b',
-    fontSize: 13,
-    fontWeight: '500',
+    fontSize: 12,
+    fontWeight: '400',
     lineHeight: 19,
     marginTop: 4,
   },

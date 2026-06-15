@@ -2,6 +2,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
+import { BackButton } from '../../../components/buttons';
 import { useThemeColors } from '../../../theme/colors';
 
 const socialItems = [
@@ -47,9 +48,7 @@ function FollowUsScreen({ onBackPress }: FollowUsScreenProps) {
         { backgroundColor: colors.background, paddingTop: safeAreaInsets.top + 22 },
       ]}>
       <View style={[styles.header, { backgroundColor: colors.surface }]}>
-        <Pressable onPress={onBackPress} style={styles.backButton}>
-          <FontAwesome name="arrow-left" size={20} color={colors.text} />
-        </Pressable>
+        <BackButton onPress={onBackPress} />
         <Text style={[styles.headerTitle, { color: colors.text }]}>Follow Us</Text>
       </View>
 
@@ -103,15 +102,9 @@ const styles = StyleSheet.create({
     height: 72,
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
     backgroundColor: '#ffffff',
     paddingHorizontal: 20,
-  },
-  backButton: {
-    width: 20,
-    height: 42,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 18,
   },
   headerTitle: {
     color: '#111827',

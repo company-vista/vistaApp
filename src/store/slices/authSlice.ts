@@ -112,7 +112,9 @@ export const loginUser = createAsyncThunk<
     token: result.token ?? '',
   };
 
-  await saveAuthSession(session);
+  saveAuthSession(session).catch(error => {
+    console.warn('Unable to persist auth session after login', error);
+  });
 
   return session;
 });

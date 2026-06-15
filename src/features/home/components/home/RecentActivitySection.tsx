@@ -12,9 +12,6 @@ function RecentActivitySection() {
         <Text style={[styles.sectionTitleNoMargin, { color: colors.text }]}>
           Recent Activity
         </Text>
-        <Pressable>
-          <Text style={styles.viewAll}>View All</Text>
-        </Pressable>
       </View>
 
       <ScrollView

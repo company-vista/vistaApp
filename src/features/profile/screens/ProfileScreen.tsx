@@ -1,49 +1,128 @@
-import { Image, Pressable, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Image, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
+import { BackButton } from '../../../components/buttons';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
-import { logoutUser } from '../../../store/slices/authSlice';
+import { logoutUser, updateProfileUser } from '../../../store/slices/authSlice';
 import { useThemeColors } from '../../../theme/colors';
+import { fetchClientProfile } from '../api/clientProfileDetailsApi';
 import styles from './ProfileScreen.styles';
 
 type ProfileScreenProps = {
+  onAddressPress: () => void;
   onBackPress: () => void;
   onEditPress: () => void;
 };
 
-function ProfileScreen({ onBackPress, onEditPress }: ProfileScreenProps) {
+function formatProfileDate(value?: string) {
+  if (!value) {
+    return 'N/A';
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+function ProfileScreen({ onAddressPress, onBackPress, onEditPress }: ProfileScreenProps) {
   const safeAreaInsets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
   const colors = useThemeColors();
   const user = useAppSelector(state => state.auth.user);
-  console.log(user);
-  
+  const token = useAppSelector(state => state.auth.token);
+  const [isSwitchSheetVisible, setIsSwitchSheetVisible] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadProfile() {
+      const result = await fetchClientProfile(token);
+
+      if (isMounted && result.user) {
+        dispatch(updateProfileUser(result.user));
+      }
+    }
+
+    loadProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [dispatch, token]);
+
   const profileImage =
     user?.profileImage ?? user?.profilePicture ?? user?.avatar ?? user?.image ?? user?.photo;
+  const phone = user?.phone ?? user?.phoneNumber ?? user?.mobile ?? 'N/A';
+  const dateOfBirth = formatProfileDate(user?.dateOfBirth ?? user?.dob);
+  const passportNumber = user?.passportNumber ?? user?.passportNo ?? 'N/A';
   const profileItems = [
-    { label: 'Email', value: user?.email ?? 'demo@vista.com', icon: 'envelope-o' },
-    { label: 'Phone', value: user?.phone ?? '+91 98765 43210', icon: 'phone' },
-    { label: 'Company', value: user?.company ?? 'Company Vista', icon: 'building-o' },
-    { label: 'Role', value: user?.role ?? 'Client Admin', icon: 'user-o' },
+    { label: 'Email', value: user?.email ?? 'N/A', icon: 'envelope-o' },
+    { label: 'Phone', value: phone, icon: 'phone' },
+    { label: 'Date of Birth', value: dateOfBirth, icon: 'calendar-o' },
+    { label: 'Passport Number', value: passportNumber, icon: 'id-card-o' },
+    { label: 'Role', value: user?.role ?? 'N/A', icon: 'user-o' },
   ];
+  const street =
+    user?.address?.addressLine1 ??
+    user?.address?.street ??
+    user?.addressLine1 ??
+    user?.street;
+  const cityState = [user?.address?.city, user?.address?.state]
+    .filter(Boolean)
+    .join(', ');
+  const postalCode = user?.address?.postalCode ?? user?.postalCode;
+  const country = user?.address?.country ?? user?.country;
+  const addressSummary = [street, cityState, postalCode, country].filter(Boolean).join(', ') || 'Add address';
+  const switchSheetBackground = colors.mode === 'dark' ? '#1f1f22' : colors.surface;
+
+  function handleSwitchAccountPress() {
+    setIsSwitchSheetVisible(true);
+  }
+
+  function handleAddAccountPress() {
+    setIsSwitchSheetVisible(false);
+    dispatch(logoutUser());
+  }
 
   return (
-    <View
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={[
+        styles.scrollContent,
+        {
+          backgroundColor: colors.background,
+          paddingBottom: Math.max(safeAreaInsets.bottom, 24),
+          paddingTop: safeAreaInsets.top + 22,
+        },
+      ]}
       style={[
         styles.screen,
-        { backgroundColor: colors.background, paddingTop: safeAreaInsets.top + 22 },
+        { backgroundColor: colors.background },
       ]}>
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Pressable
-            onPress={onBackPress}
-            style={[styles.backButton, { backgroundColor: colors.surface }]}>
-            <FontAwesome name="arrow-left" size={18} color={colors.text} />
-          </Pressable>
+          <BackButton onPress={onBackPress} />
           <Text style={[styles.title, { color: colors.text }]}>Profile</Text>
         </View>
-        <Pressable onPress={onEditPress} style={styles.editButton}>
+        <Pressable
+          onPress={onEditPress}
+          style={[
+            styles.editButton,
+            {
+              backgroundColor: colors.accentSoft,
+              borderColor: colors.mode === 'dark' ? colors.accent : colors.accentSoft,
+            },
+          ]}>
           <FontAwesome name="pencil" size={16} color={colors.accent} />
           <Text style={[styles.editText, { color: colors.accent }]}>Edit</Text>
         </Pressable>
@@ -66,33 +145,67 @@ function ProfileScreen({ onBackPress, onEditPress }: ProfileScreenProps) {
               <FontAwesome name="user" size={42} color={colors.accent} />
             )}
           </View>
-          <View
-            style={[
-              styles.cameraButton,
-              { backgroundColor: colors.accent, borderColor: colors.surface },
-            ]}>
-            <FontAwesome name="camera" size={14} color="#ffffff" />
-          </View>
         </View>
-        <Text style={[styles.name, { color: colors.text }]}>{user?.name ?? 'Demo User'}</Text>
+        <Text style={[styles.name, { color: colors.text }]}>{user?.name ?? 'N/A'}</Text>
         <Text style={[styles.subtitle, { color: colors.muted }]}>Client Portal Account</Text>
       </View>
 
+      <Pressable
+        onPress={handleSwitchAccountPress}
+        style={[
+          styles.switchAccountButton,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+          },
+        ]}>
+        <View style={[styles.switchAccountIcon, { backgroundColor: colors.surfaceAlt }]}>
+          <FontAwesome name="exchange" size={16} color={colors.accent} />
+        </View>
+        <View style={styles.switchAccountCopy}>
+          <Text style={[styles.switchAccountTitle, { color: colors.text }]}>
+            Switch account
+          </Text>
+          <Text style={[styles.switchAccountSubtitle, { color: colors.subtle }]}>
+            Sign in with another account
+          </Text>
+        </View>
+        <FontAwesome name="angle-right" size={22} color={colors.muted} />
+      </Pressable>
+
       <View style={[styles.detailsCard, { backgroundColor: colors.surface }]}>
-        {profileItems.map(item => (
-          <View key={item.label} style={[styles.detailRow, { borderBottomColor: colors.border }]}>
-            <View style={[styles.detailIcon, { backgroundColor: colors.surfaceAlt }]}>
-              <FontAwesome name={item.icon} size={17} color={colors.accent} />
+        <Text style={[styles.sectionTitle, { color: colors.muted }]}>
+          Contact information
+        </Text>
+        <View>
+          {profileItems.map(item => (
+            <View key={item.label} style={[styles.detailRow, { borderBottomColor: colors.border }]}>
+              <View style={[styles.detailIcon, { backgroundColor: colors.surfaceAlt }]}>
+                <FontAwesome name={item.icon} size={17} color={colors.accent} />
+              </View>
+              <View style={styles.detailCopy}>
+                <Text style={[styles.detailLabel, { color: colors.subtle }]}>
+                  {item.label}
+                </Text>
+                <Text style={[styles.detailValue, { color: colors.text }]}>{item.value}</Text>
+              </View>
             </View>
-            <View style={styles.detailCopy}>
-              <Text style={[styles.detailLabel, { color: colors.subtle }]}>
-                {item.label}
-              </Text>
-              <Text style={[styles.detailValue, { color: colors.text }]}>{item.value}</Text>
-            </View>
-          </View>
-        ))}
+          ))}
+        </View>
       </View>
+
+      <Pressable
+        onPress={onAddressPress}
+        style={[styles.addressCard, { backgroundColor: colors.surface }]}>
+        <View style={[styles.detailIcon, { backgroundColor: colors.surfaceAlt }]}>
+          <FontAwesome name="map-marker" size={17} color={colors.accent} />
+        </View>
+        <View style={styles.detailCopy}>
+          <Text style={[styles.detailLabel, { color: colors.subtle }]}>Address</Text>
+          <Text style={[styles.detailValue, { color: colors.text }]}>{addressSummary}</Text>
+        </View>
+        <FontAwesome name="angle-right" size={22} color={colors.muted} />
+      </Pressable>
 
       <Pressable onPress={() => dispatch(logoutUser())} style={styles.logoutButton}>
         <FontAwesome name="sign-out" size={18} color="#ffffff" />
@@ -102,7 +215,54 @@ function ProfileScreen({ onBackPress, onEditPress }: ProfileScreenProps) {
       <Text style={[styles.versionText, { color: colors.subtle }]}>
         Company Vista v0.0.4
       </Text>
-    </View>
+
+      <Modal
+        animationType="slide"
+        transparent
+        visible={isSwitchSheetVisible}
+        onRequestClose={() => setIsSwitchSheetVisible(false)}>
+        <Pressable
+          style={styles.switchSheetOverlay}
+          onPress={() => setIsSwitchSheetVisible(false)}>
+          <Pressable
+            onPress={event => event.stopPropagation()}
+            style={[
+              styles.switchSheet,
+              { backgroundColor: switchSheetBackground },
+            ]}>
+            <View style={styles.switchSheetHandle} />
+
+            <View style={[styles.switchSheetAccountBox, { borderColor: colors.border }]}>
+              <View style={styles.switchSheetAccountRow}>
+                <View style={styles.switchSheetAvatar}>
+                  {profileImage ? (
+                    <Image source={{ uri: profileImage }} style={styles.switchSheetAvatarImage} />
+                  ) : (
+                    <FontAwesome name="user" size={17} color={colors.accent} />
+                  )}
+                </View>
+                <Text
+                  numberOfLines={1}
+                  style={[styles.switchSheetAccountName, { color: colors.text }]}>
+                  {user?.name ?? user?.email ?? 'Current account'}
+                </Text>
+              </View>
+
+              <Pressable onPress={handleAddAccountPress} style={styles.switchSheetAddRow}>
+                <View style={styles.switchSheetAddIcon}>
+                  <FontAwesome name="plus" size={18} color="#ffffff" />
+                </View>
+                <Text style={[styles.switchSheetAddText, { color: colors.text }]}>
+                  Add another account
+                </Text>
+              </Pressable>
+            </View>
+
+            <Text style={[styles.metaText, { color: colors.muted }]}>Company Vista</Text>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </ScrollView>
   );
 }
 export default ProfileScreen;
