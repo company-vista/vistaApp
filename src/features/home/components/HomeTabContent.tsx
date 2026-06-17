@@ -3,7 +3,7 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 import type { QuickAccessItemId } from '../data/quickAccessItems';
 import type { CompanyCardItem } from '../screens/quickAccess/CompanyCard';
-import ComplianceStatusSection from './home/ComplianceStatusSection';
+import ComplianceStatusSection from '../screens/compliances/ComplianceStatusSection';
 import HomeHeroSection from './home/HomeHeroSection';
 import OrderServicesSection from './home/OrderServicesSection';
 import UpcomingDeadlinesSection from './home/UpcomingDeadlinesSection';
@@ -12,6 +12,7 @@ type HomeTabContentProps = {
   isLoadingCompanies?: boolean;
   onCompanyInfoPress: () => void;
   onCompanySwitcherPress: () => void;
+  onManagePress: () => void;
   onQuickAccessItemPress: (itemId: QuickAccessItemId) => void;
   onQuickAccessViewAllPress: () => void;
   selectedCompany?: CompanyCardItem | null;
@@ -21,6 +22,7 @@ function HomeTabContent({
   isLoadingCompanies = false,
   onCompanyInfoPress,
   onCompanySwitcherPress,
+  onManagePress,
   onQuickAccessItemPress,
   onQuickAccessViewAllPress,
   selectedCompany,
@@ -31,6 +33,7 @@ function HomeTabContent({
         isLoadingCompanies={isLoadingCompanies}
         onCompanyInfoPress={onCompanyInfoPress}
         onCompanySwitcherPress={onCompanySwitcherPress}
+        onManagePress={onManagePress}
         selectedCompany={selectedCompany}
       />
 
@@ -45,11 +48,12 @@ function HomeTabContent({
         </View>
         <Text style={styles.alertAction}>Fix</Text>
       </View>
-      
+
       <ComplianceStatusSection
         companyId={selectedCompany?.id}
         onViewAllPress={onQuickAccessViewAllPress}
       />
+
       <OrderServicesSection onQuickAccessItemPress={onQuickAccessItemPress} />
       <UpcomingDeadlinesSection />
     </View>

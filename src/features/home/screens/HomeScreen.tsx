@@ -24,14 +24,16 @@ import {
   type ClientCompany,
 } from '../api/clientProfileApi';
 import { mapCompanyToListItem } from './quickAccess/companyListItem';
-import BillingTabContent from '../components/InvoicesTabContent';
+import BillingTabContent from './invoices/InvoicesTabContent';
 import CompanyTabContent from '../components/CompanyTabContent';
-import DocumentsTabContent from '../components/DocumentsTabContent';
-import DocumentViewScreen from './DocumentViewScreen';
+import DocumentsTabContent from './documents/DocumentsTabContent';
+import DocumentViewScreen from './documents/DocumentViewScreen';
+import InvoiceDetailScreen from './invoices/InvoiceDetailScreen';
+import ManageCompanyScreen from './ManageCompanyScreen';
 import type { DocumentItem } from '../api/clientDocumentApi';
 import HomeTabContent from '../components/HomeTabContent';
 import MoreTabContent from '../components/MoreTabContent';
-import ReportsTabContent from '../components/ReportsTabContent';
+import ReportsTabContent from './compliances/ReportsTabContent';
 import type { QuickAccessItemId } from '../data/quickAccessItems';
 
 type TabId = 'home' | 'company' | 'reports' | 'billing' | 'documents' | 'more';
@@ -87,13 +89,33 @@ function HomeScreen({
   const [notificationCount, setNotificationCount] = useState(0);
   const [selectedCompany, setSelectedCompany] = useState<CompanyCardItem | null>(null);
   const [selectedDocument, setSelectedDocument] = useState<DocumentItem | null>(null);
+  const [isManageScreenOpen, setIsManageScreenOpen] = useState(false);
   const [companyOptions, setCompanyOptions] = useState<CompanyCardItem[]>([]);
   const [isCompanySwitcherOpen, setIsCompanySwitcherOpen] = useState(false);
   const [isLoadingCompanies, setIsLoadingCompanies] = useState(false);
   const fabMenuAnim = useRef(new Animated.Value(0)).current;
   const companySwitcherAnim = useRef(new Animated.Value(0)).current;
   const moreSlideAnim = useRef(new Animated.Value(320)).current;
+  const bellAnim = useRef(new Animated.Value(0)).current;
   const fabMenuOpacity = fabMenuAnim;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(bellAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
+        Animated.timing(bellAnim, { toValue: -1, duration: 100, useNativeDriver: true }),
+        Animated.timing(bellAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
+        Animated.timing(bellAnim, { toValue: -1, duration: 100, useNativeDriver: true }),
+        Animated.timing(bellAnim, { toValue: 0, duration: 100, useNativeDriver: true }),
+        Animated.delay(2000),
+      ])
+    ).start();
+  }, [bellAnim]);
+
+  const bellRotation = bellAnim.interpolate({
+    inputRange: [-1, 1],
+    outputRange: ['-15deg', '15deg'],
+  });
+
   const fabMenuScale = fabMenuAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [0.2, 1],
@@ -329,6 +351,15 @@ function HomeScreen({
     );
   }
 
+  if (isManageScreenOpen) {
+    return (
+      <ManageCompanyScreen
+        selectedCompany={selectedCompany}
+        onBackPress={() => setIsManageScreenOpen(false)}
+      />
+    );
+  }
+
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <ScrollView
@@ -362,7 +393,9 @@ function HomeScreen({
           <Pressable
             onPress={onNotificationPress}
             style={[styles.headerIcon, styles.notificationButton]}>
-            <FontAwesome name="bell-o" size={21} color={colors.text} />
+            <Animated.View style={{ transform: [{ rotate: bellRotation }] }}>
+              <FontAwesome name="bell-o" size={21} color={colors.text} />
+            </Animated.View>
             {notificationCount > 0 ? (
               <View style={styles.notificationBadge}>
                 <Text style={styles.notificationBadgeText}>
@@ -395,6 +428,7 @@ function HomeScreen({
             selectedCompany={selectedCompany}
             onCompanyInfoPress={() => setActiveTab('company')}
             onCompanySwitcherPress={openCompanySwitcher}
+            onManagePress={() => setIsManageScreenOpen(true)}
             onQuickAccessItemPress={onQuickAccessItemPress}
             onQuickAccessViewAllPress={onQuickAccessViewAllPress}
           />

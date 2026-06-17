@@ -9,9 +9,9 @@ import {
 } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
-import { useThemeColors } from '../../../theme/colors';
-import type { DocumentItem } from '../api/clientDocumentApi';
-import BackButton from '../../../components/buttons/BackButton';
+import { useThemeColors } from '../../../../theme/colors';
+import type { DocumentItem } from '../../api/clientDocumentApi';
+import BackButton from '../../../../components/buttons/BackButton';
 
 type DocumentViewScreenProps = {
   document: DocumentItem;

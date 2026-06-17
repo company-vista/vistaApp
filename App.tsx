@@ -20,7 +20,7 @@ import BusinessReportsScreen from './src/features/home/screens/quickAccess/Busin
 import CompanyProfileScreen from './src/features/home/screens/quickAccess/CompanyProfileScreen';
 import HelpDeskScreen from './src/features/home/screens/quickAccess/HelpDeskScreen';
 import InvoiceCenterScreen from './src/features/home/screens/quickAccess/InvoiceCenterScreen';
-import InvoiceDetailScreen from './src/features/home/screens/InvoiceDetailScreen';
+import InvoiceDetailScreen from './src/features/home/screens/invoices/InvoiceDetailScreen';
 import NotificationDetailScreen from './src/features/notifications/screens/NotificationDetailScreen';
 import NotificationScreen from './src/features/notifications/screens/NotificationScreen';
 import EditProfileScreen from './src/features/profile/screens/EditProfileScreen';

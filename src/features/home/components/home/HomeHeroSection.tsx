@@ -7,6 +7,7 @@ type HomeHeroSectionProps = {
   isLoadingCompanies?: boolean;
   onCompanyInfoPress: () => void;
   onCompanySwitcherPress: () => void;
+  onManagePress: () => void;
   selectedCompany?: CompanyCardItem | null;
 };
 
@@ -14,6 +15,7 @@ function HomeHeroSection({
   isLoadingCompanies = false,
   onCompanyInfoPress,
   onCompanySwitcherPress,
+  onManagePress,
   selectedCompany,
 }: HomeHeroSectionProps) {
   const heroCompanyName = selectedCompany?.name ?? (
@@ -55,18 +57,17 @@ function HomeHeroSection({
         <Text style={styles.heroMetaAccent}>{heroCompanyEin}</Text>  -  Added {heroCompanyDate}
       </Text>
       <View style={styles.heroStats}>
-        <View style={styles.heroTile}>
-          <Text style={styles.heroTileNumber}>
-            {selectedCompany ? selectedCompany.initials : '--'}
-          </Text>
-          <Text style={styles.heroTileLabel}>Company initials</Text>
-        </View>
+
         <View style={styles.heroTile}>
           <Text style={[styles.heroTileNumber, styles.heroTileWarn]}>
             {heroCompanyStatus}
           </Text>
           <Text style={styles.heroTileLabel}>Company status</Text>
         </View>
+        <Pressable onPress={onManagePress} style={styles.heroTile}>
+          <FontAwesome name="cog" size={22} color="#85B7EB" style={{ marginBottom: 0 }} />
+          <Text style={styles.heroTileLabel}>Manage</Text>
+        </Pressable>
         <Pressable onPress={onCompanyInfoPress} style={styles.heroTile}>
           <FontAwesome name="info-circle" size={22} color="#F09595" style={{ marginBottom: 0 }} />
           <Text style={styles.heroTileLabel}>Company Info</Text>
@@ -131,7 +132,7 @@ const styles = StyleSheet.create({
     lineHeight: 23,
   },
   heroCompanySwitcher: {
-    maxWidth: '88%',
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

@@ -1,4 +1,4 @@
-import TabPlaceholder from './TabPlaceholder';
+import TabPlaceholder from '../../components/TabPlaceholder';
 
 function ReportsTabContent() {
   return <TabPlaceholder title="Compliances" icon="check-square-o" />;

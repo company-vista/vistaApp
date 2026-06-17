@@ -2,11 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
-import { useAppDispatch, useAppSelector } from '../../../store/hooks';
-import { useThemeColors } from '../../../theme/colors';
-import { fetchInvoicesForCompany, selectInvoicesForCompany } from '../../../store/slices/invoicesSlice';
-import type { ClientInvoice } from '../api/clientInvoicesApi';
-import type { CompanyCardItem } from '../screens/quickAccess/CompanyCard';
+import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
+import { useThemeColors } from '../../../../theme/colors';
+import { fetchInvoicesForCompany, selectInvoicesForCompany } from '../../../../store/slices/invoicesSlice';
+import type { ClientInvoice } from '../../api/clientInvoicesApi';
+import type { CompanyCardItem } from '../quickAccess/CompanyCard';
 
 type Invoice = {
   amount: string;

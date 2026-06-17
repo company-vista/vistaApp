@@ -5,11 +5,11 @@ import RNFetchBlob from 'react-native-blob-util';
 import Toast from 'react-native-toast-message';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import logo from "../../../assets/images/logoR.png"
+import logo from "../../../../assets/images/logoR.png"
 
-import BackButton from '../../../components/buttons/BackButton';
-import { useThemeColors } from '../../../theme/colors';
-import type { ClientInvoice } from '../api/clientInvoicesApi';
+import BackButton from '../../../../components/buttons/BackButton';
+import { useThemeColors } from '../../../../theme/colors';
+import type { ClientInvoice } from '../../api/clientInvoicesApi';
 
 
 type InvoiceDetailScreenProps = {

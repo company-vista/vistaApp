@@ -53,43 +53,19 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   profileButton: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
     borderWidth: 2,
     borderColor: '#7dd4fca9',
-    borderRadius: 21,
+    borderRadius: 22,
     backgroundColor: '#ffffff',
   },
   profileImage: {
     width: '100%',
     height: '100%',
-  },
-  rewardCard: {
-    minHeight: 154,
-    flexDirection: 'row',
-    alignItems: 'center',
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#fde1b8',
-    borderRadius: 12,
-    backgroundColor: '#fff1d6',
-    marginTop: 28,
-    padding: 18,
-  },
-  rewardText: {
-    flex: 1,
-  },
-  rewardTitle: {
-    color: '#111827',
-    fontSize: 21,
-    fontWeight: '800',
-  },
-  rewardBrand: {
-    color: '#c2410c',
-    fontSize: 17,
   },
   rewardSubtitle: {
     color: '#6b7280',
@@ -579,6 +555,11 @@ const styles = StyleSheet.create({
     color: '#111827',
     fontSize: 18,
     fontWeight: '900',
+  },
+  rewardTitle: {
+    color: '#111827',
+    fontSize: 21,
+    fontWeight: '800',
   },
   companySwitcherSubtitle: {
     color: '#64748b',

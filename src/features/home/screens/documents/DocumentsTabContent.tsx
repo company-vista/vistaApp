@@ -2,16 +2,16 @@ import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View, Pressable, ActivityIndicator } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
-import { useAppSelector } from '../../../store/hooks';
-import { useThemeColors, type AppTheme } from '../../../theme/colors';
-import { fetchCompanyDocuments, type DocumentItem } from '../api/clientDocumentApi';
-import type { CompanyCardItem } from '../screens/quickAccess/CompanyCard';
+import { useAppSelector } from '../../../../store/hooks';
+import { useThemeColors, type AppTheme } from '../../../../theme/colors';
+import { fetchCompanyDocuments, type DocumentItem } from '../../api/clientDocumentApi';
+import type { CompanyCardItem } from '../quickAccess/CompanyCard';
 
 const FILTERS = ['All Docs', 'Recent', 'Compliance', 'Reports'];
 
 type DocumentsTabContentProps = {
   selectedCompany?: CompanyCardItem | null;
-  onDocumentViewPress?: (doc: import('../api/clientDocumentApi').DocumentItem) => void;
+  onDocumentViewPress?: (doc: import('../../api/clientDocumentApi').DocumentItem) => void;
 };
 
 function DocumentsTabContent({ selectedCompany, onDocumentViewPress }: DocumentsTabContentProps) {
