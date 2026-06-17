@@ -55,7 +55,7 @@ export const appThemes = {
   },
 } as const;
 
-export type AppTheme = typeof appThemes.light;
+export type AppTheme = typeof appThemes.light | typeof appThemes.dark;
 
 export function useThemeColors() {
   const mode = useAppSelector(state => state.theme.mode);

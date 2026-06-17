@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Button, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
@@ -21,6 +21,7 @@ type Invoice = {
 
 type BillingTabContentProps = {
   onInvoicePress?: (invoice: ClientInvoice) => void;
+  onGoHome?: () => void;
   selectedCompany?: CompanyCardItem | null;
 };
 
@@ -236,7 +237,7 @@ function invoiceMatchesCompany(
   return true;
 }
 
-function BillingTabContent({ onInvoicePress, selectedCompany }: BillingTabContentProps) {
+function BillingTabContent({ onInvoicePress, onGoHome, selectedCompany }: BillingTabContentProps) {
   const colors = useThemeColors();
   const dispatch = useAppDispatch();
   const token = useAppSelector(state => state.auth.token);
@@ -338,9 +339,19 @@ function BillingTabContent({ onInvoicePress, selectedCompany }: BillingTabConten
           </Text>
         ) : null}
         {!isLoading && !errorMessage && selectedCompany?.id && invoices.length === 0 ? (
-          <Text style={[styles.stateText, { color: colors.muted }]}>
+          <View style={styles.emptyState}>
+            <Text style={[styles.stateText, { color: colors.muted }]}>
             No invoices found for this company.
           </Text>
+            <Pressable 
+              onPress={() => {
+                onGoHome?.();
+              }}
+              style={[styles.homeButton, { backgroundColor: colors.primary }]}
+            >
+              <Text style={[styles.text, { color: colors.onPrimary || 'white' }]}>Go To Home</Text>
+            </Pressable>
+          </View>
         ) : null}
         {invoices.map(invoice => {
           const isOverdue = invoice.status === 'overdue';
@@ -503,6 +514,21 @@ const styles = StyleSheet.create({
   invoiceList: {
     gap: 12,
     marginTop: 18,
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+    paddingVertical: 40,
+    marginTop: 130
+  },
+  homeButton:{
+    padding: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  text: {
+    fontWeight: '600',
   },
   invoiceCard: {
     borderRadius: 20,

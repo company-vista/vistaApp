@@ -10,6 +10,7 @@ import UpcomingDeadlinesSection from './home/UpcomingDeadlinesSection';
 
 type HomeTabContentProps = {
   isLoadingCompanies?: boolean;
+  onCompanyInfoPress: () => void;
   onCompanySwitcherPress: () => void;
   onQuickAccessItemPress: (itemId: QuickAccessItemId) => void;
   onQuickAccessViewAllPress: () => void;
@@ -18,6 +19,7 @@ type HomeTabContentProps = {
 
 function HomeTabContent({
   isLoadingCompanies = false,
+  onCompanyInfoPress,
   onCompanySwitcherPress,
   onQuickAccessItemPress,
   onQuickAccessViewAllPress,
@@ -27,6 +29,7 @@ function HomeTabContent({
     <View style={styles.container}>
       <HomeHeroSection
         isLoadingCompanies={isLoadingCompanies}
+        onCompanyInfoPress={onCompanyInfoPress}
         onCompanySwitcherPress={onCompanySwitcherPress}
         selectedCompany={selectedCompany}
       />

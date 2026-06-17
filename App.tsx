@@ -165,6 +165,7 @@ function AppContent() {
           onProfilePress={() => setAppScreen('profile')}
           onQuickAccessItemPress={itemId => openQuickAccessItem(itemId, 'home')}
           onQuickAccessViewAllPress={() => setAppScreen('quickAccess')}
+          onGoHome={() => setHomeInitialTab('home')}
         />
       ) : isAuthenticated && appScreen === 'invoiceDetail' && selectedInvoice ? (
         <InvoiceDetailScreen

@@ -1,29 +1,34 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-
 import { useThemeColors } from '../../../theme/colors';
+import CompanyDetailScreen from './CompanyDetailScreen';
+import type { CompanyCardItem } from '../screens/quickAccess/CompanyCard';
 
-function CompanyTabContent() {
+type CompanyTabContentProps = {
+  selectedCompany: CompanyCardItem | null;
+};
+
+function CompanyTabContent({ selectedCompany }: CompanyTabContentProps) {
   const colors = useThemeColors();
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.text, { color: colors.muted }]}>
-        Company page
-      </Text>
+      <CompanyDetailScreen selectedCompany={selectedCompany} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 220,
+    width: 'auto',
+    // alignItems: 'center',
+    // justifyContent: 'center',
+    // minHeight: 220,
+    marginTop: 40
   },
   text: {
     color: '#64748b',
-    fontSize: 16,
+    // fontSize: 16,
     fontWeight: '600',
   },
 });

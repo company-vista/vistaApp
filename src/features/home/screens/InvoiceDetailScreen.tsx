@@ -141,7 +141,7 @@ function InvoiceDetailScreen({
 }: InvoiceDetailScreenProps) {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
-
+  console.log("=== MY INVOICE DATA ===", JSON.stringify(invoice, null, 2));
   // डेटा पार्सिंग
   const paymentStatus = getStringValue(
     invoice.paymentStatus,
@@ -161,13 +161,13 @@ function InvoiceDetailScreen({
   );
 
   const clientName =
-    getStringValue(invoice.clientName, invoice.customerName) ||
+    getStringValue(invoice?.company?.companyName, invoice.companyName, invoice.customerName, invoice.clientName) ||
     'AARS EXHIBITS LLC';
   const clientAddress =
     getStringValue(invoice.clientAddress, invoice.toAddress) ||
-    '401 Ryland St, STE 200-A Reno, Reno, Nevada 8950';
+    (invoice?.company?.countryOfIncorporation ? `Company address not available (${invoice?.company?.countryOfIncorporation})` : 'Company address not available');
   const clientCountry =
-    getStringValue(invoice.country, invoice.clientCountry) || 'United States';
+    getStringValue(invoice.country, invoice.clientCountry, invoice?.company?.countryOfIncorporation) || 'United States';
 
   const currency =
     getStringValue(invoice.currency, invoice.currencyCode) || 'USD';
@@ -316,10 +316,10 @@ function InvoiceDetailScreen({
         <div>
           <h3 style="color: #6d28d9; font-size: 11px; text-transform: uppercase; margin-bottom: 8px; font-weight: bold;">Bank Details</h3>
           <div style="font-size: 11px; display: grid; grid-template-columns: 80px 1fr; row-gap: 4px;">
-            <span style="color:#94a3b8;">Bank:</span><span style="font-weight:bold; color:#1e1b4b;">${bankName}</span>
+            <span style="color:#94a3b8;">Bank Name:</span><span style="font-weight:bold; color:#1e1b4b;">${bankName}</span>
             <span style="color:#94a3b8;">Account No.:</span><span style="font-weight:bold; color:#1e1b4b;">${accountNo}</span>
             <span style="color:#94a3b8;">Routing:</span><span style="font-weight:bold; color:#1e1b4b;">${routing}</span>
-            <span style="color:#94a3b8;">Holder:</span><span style="font-weight:bold; color:#1e1b4b;">${companyName}</span>
+            <span style="color:#94a3b8;">Account Holder:</span><span style="font-weight:bold; color:#1e1b4b;">${companyName}</span>
           </div>
         </div>
         <div style="margin-top: 15px;">
@@ -591,7 +591,7 @@ function InvoiceDetailScreen({
           <View style={styles.splitLeft}>
             <Text style={styles.boxTitle}>BANK DETAILS</Text>
             <View style={styles.bankRow}>
-              <Text style={styles.bankLabel}>Bank:</Text>
+              <Text style={styles.bankLabel}>Bank Name:</Text>
               <Text style={styles.bankValue}>{bankName}</Text>
             </View>
             <View style={styles.bankRow}>
@@ -603,7 +603,7 @@ function InvoiceDetailScreen({
               <Text style={styles.bankValue}>{routing}</Text>
             </View>
             <View style={styles.bankRow}>
-              <Text style={styles.bankLabel}>Holder:</Text>
+              <Text style={styles.bankLabel}>Account Holder:</Text>
               <Text style={styles.bankValue}>{companyName}</Text>
             </View>
 
@@ -732,8 +732,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   yellowDivider: { height: 4, backgroundColor: '#eab308' },
-  detailsGrid: { padding: 16, backgroundColor: '#ffffff' },
-  gridColumn: { marginBottom: 16 },
+  detailsGrid: { padding: 16, backgroundColor: '#ffffff', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  gridColumn: { flex: 1, minWidth: 140, marginBottom: 16, paddingHorizontal: 8, borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8, padding: 12, backgroundColor: '#fafafa' },
   columnLabel: {
     color: '#6d28d9',
     fontSize: 10,
@@ -818,7 +818,7 @@ const styles = StyleSheet.create({
     color: '#1e1b4b',
   },
   splitBox: {
-    flexDirection: 'row',
+    flexDirection: "column",
     backgroundColor: '#ffffff',
     borderTopWidth: 1,
     borderTopColor: '#f1f5f9',
@@ -838,7 +838,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   bankRow: { flexDirection: 'row', marginBottom: 4 },
-  bankLabel: { width: 75, fontSize: 11, color: '#94a3b8' },
+  bankLabel: { width: 95, fontSize: 11, color: '#94a3b8' },
   bankValue: { flex: 1, fontSize: 11, fontWeight: '600', color: '#1e1b4b' },
   termsText: { fontSize: 10, color: '#64748b', marginBottom: 2 },
   summaryRow: {

@@ -5,12 +5,14 @@ import type { CompanyCardItem } from '../../screens/quickAccess/CompanyCard';
 
 type HomeHeroSectionProps = {
   isLoadingCompanies?: boolean;
+  onCompanyInfoPress: () => void;
   onCompanySwitcherPress: () => void;
   selectedCompany?: CompanyCardItem | null;
 };
 
 function HomeHeroSection({
   isLoadingCompanies = false,
+  onCompanyInfoPress,
   onCompanySwitcherPress,
   selectedCompany,
 }: HomeHeroSectionProps) {
@@ -65,14 +67,10 @@ function HomeHeroSection({
           </Text>
           <Text style={styles.heroTileLabel}>Company status</Text>
         </View>
-        <View style={styles.heroTile}>
-          <Text
-            numberOfLines={1}
-            style={[styles.heroTileNumber, styles.heroTileDanger]}>
-            {selectedCompany ? heroCompanyType : '--'}
-          </Text>
-          <Text style={styles.heroTileLabel}>Company type</Text>
-        </View>
+        <Pressable onPress={onCompanyInfoPress} style={styles.heroTile}>
+          <FontAwesome name="info-circle" size={22} color="#F09595" style={{ marginBottom: 0 }} />
+          <Text style={styles.heroTileLabel}>Company Info</Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -181,7 +179,7 @@ const styles = StyleSheet.create({
   },
   heroTileNumber: {
     color: '#ffffff',
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '500',
     lineHeight: 22,
   },

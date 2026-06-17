@@ -26,18 +26,21 @@ import {
 import { mapCompanyToListItem } from './quickAccess/companyListItem';
 import BillingTabContent from '../components/InvoicesTabContent';
 import CompanyTabContent from '../components/CompanyTabContent';
+import DocumentsTabContent from '../components/DocumentsTabContent';
+import DocumentViewScreen from './DocumentViewScreen';
+import type { DocumentItem } from '../api/clientDocumentApi';
 import HomeTabContent from '../components/HomeTabContent';
 import MoreTabContent from '../components/MoreTabContent';
 import ReportsTabContent from '../components/ReportsTabContent';
 import type { QuickAccessItemId } from '../data/quickAccessItems';
 
-type TabId = 'home' | 'company' | 'reports' | 'billing' | 'more';
+type TabId = 'home' | 'company' | 'reports' | 'billing' | 'documents' | 'more';
 
 const tabs: Array<{ id: TabId; title: string; icon: string }> = [
   { id: 'home', title: 'Home', icon: 'home' },
-  { id: 'company', title: 'Company Info', icon: 'info-circle' },
   { id: 'reports', title: 'Compliances', icon: 'check-square-o' },
   { id: 'billing', title: 'Invoices', icon: 'file-text-o' },
+  { id: 'documents', title: 'Documents', icon: 'folder-o' },
   { id: 'more', title: 'More', icon: 'ellipsis-h' },
 ];
 const emptyCompanies: ClientCompany[] = [];
@@ -50,6 +53,7 @@ type HomeScreenProps = {
   initialTab?: TabId;
   onFollowUsPress: () => void;
   onHelpFeedbackPress: () => void;
+  onGoHome: () => void;
   onInvoicePress?: (invoice: Record<string, unknown>) => void;
   onNotificationPress: () => void;
   onProfilePress: () => void;
@@ -61,6 +65,7 @@ function HomeScreen({
   initialTab,
   onFollowUsPress,
   onHelpFeedbackPress,
+  onGoHome,
   onInvoicePress,
   onNotificationPress,
   onProfilePress,
@@ -81,6 +86,7 @@ function HomeScreen({
   const [searchQuery, setSearchQuery] = useState('');
   const [notificationCount, setNotificationCount] = useState(0);
   const [selectedCompany, setSelectedCompany] = useState<CompanyCardItem | null>(null);
+  const [selectedDocument, setSelectedDocument] = useState<DocumentItem | null>(null);
   const [companyOptions, setCompanyOptions] = useState<CompanyCardItem[]>([]);
   const [isCompanySwitcherOpen, setIsCompanySwitcherOpen] = useState(false);
   const [isLoadingCompanies, setIsLoadingCompanies] = useState(false);
@@ -314,6 +320,15 @@ function HomeScreen({
     closeCompanySwitcher();
   }
 
+  if (selectedDocument) {
+    return (
+      <DocumentViewScreen
+        document={selectedDocument}
+        onBackPress={() => setSelectedDocument(null)}
+      />
+    );
+  }
+
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <ScrollView
@@ -378,15 +393,26 @@ function HomeScreen({
           <HomeTabContent
             isLoadingCompanies={isLoadingCompanies}
             selectedCompany={selectedCompany}
+            onCompanyInfoPress={() => setActiveTab('company')}
             onCompanySwitcherPress={openCompanySwitcher}
             onQuickAccessItemPress={onQuickAccessItemPress}
             onQuickAccessViewAllPress={onQuickAccessViewAllPress}
           />
         ) : null}
-        {activeTab === 'company' ? <CompanyTabContent /> : null}
+        {activeTab === 'company' ? <CompanyTabContent selectedCompany={selectedCompany} /> : null}
         {activeTab === 'reports' ? <ReportsTabContent /> : null}
         {activeTab === 'billing' ? (
-          <BillingTabContent onInvoicePress={onInvoicePress} selectedCompany={selectedCompany} />
+          <BillingTabContent
+            onInvoicePress={onInvoicePress}
+            onGoHome={() => setActiveTab('home')}
+            selectedCompany={selectedCompany}
+          />
+        ) : null}
+        {activeTab === 'documents' ? (
+          <DocumentsTabContent
+            selectedCompany={selectedCompany}
+            onDocumentViewPress={doc => setSelectedDocument(doc)}
+          />
         ) : null}
       </ScrollView>
 
@@ -487,6 +513,8 @@ function HomeScreen({
               }
             />
             <Text
+              numberOfLines={1}
+              adjustsFontSizeToFit
               style={[
                 styles.navText,
                 { color: colors.muted },

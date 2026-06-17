@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import {
   fetchClientInvoices,
@@ -74,12 +74,15 @@ const invoicesSlice = createSlice({
 export const { clearInvoices } = invoicesSlice.actions;
 export default invoicesSlice.reducer;
 
-export function selectInvoicesForCompany(
-  state: { invoices: InvoicesState },
-  companyId?: string,
-): ClientInvoice[] {
-  if (companyId) {
-    return state.invoices.byCompanyId[companyId] ?? [];
-  }
-  return state.invoices.all;
-}
+const selectInvoicesState = (state: { invoices: InvoicesState }) => state.invoices;
+const selectCompanyId = (_: unknown, companyId?: string) => companyId;
+
+export const selectInvoicesForCompany = createSelector(
+  [selectInvoicesState, selectCompanyId],
+  (invoicesState, companyId): ClientInvoice[] => {
+    if (companyId) {
+      return invoicesState.byCompanyId[companyId] ?? [];
+    }
+    return invoicesState.all;
+  },
+);
