@@ -24,6 +24,7 @@ function getDocumentPalette(colors: AppTheme) {
     panelButton: isDark ? '#183A5C' : HOME_HERO_COLORS.panel,
     actionSurface: isDark ? '#183A5C' : '#EAF4FF',
     actionBorder: isDark ? 'rgba(133,183,235,0.35)' : '#C7DFF6',
+    documentTypeText: isDark ? colors.muted : '#164066',
     iconSurface: isDark ? 'rgba(133,183,235,0.14)' : '#EAF4FF',
     iconColor: isDark ? HOME_HERO_COLORS.accentBlue : HOME_HERO_COLORS.panel,
     fileIconColor: isDark ? HOME_HERO_COLORS.accentBlue : HOME_HERO_COLORS.panel,
@@ -73,7 +74,12 @@ function DocumentsTabContent({ selectedCompany, onDocumentViewPress }: Documents
     const lowerQuery = searchQuery.toLowerCase();
     const fileName = (doc.originalFileName ?? doc.fileName ?? '').toLowerCase();
     const companyName = (doc.companyName ?? '').toLowerCase();
-    return fileName.includes(lowerQuery) || companyName.includes(lowerQuery);
+    const documentType = (doc.documentType ?? '').toLowerCase();
+    return (
+      fileName.includes(lowerQuery) ||
+      companyName.includes(lowerQuery) ||
+      documentType.includes(lowerQuery)
+    );
   });
 
   return (
@@ -97,7 +103,7 @@ function DocumentsTabContent({ selectedCompany, onDocumentViewPress }: Documents
           <FontAwesome name="search" size={16} color={palette.accentText} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search documents..."
+            placeholder="Search by file, company, or type"
             placeholderTextColor={colors.subtle}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -140,6 +146,9 @@ function DocumentsTabContent({ selectedCompany, onDocumentViewPress }: Documents
                     <Text numberOfLines={1} style={styles.cardSubtitle}>
                       {doc.originalFileName ?? doc.documentType ?? 'Document'}
                     </Text>
+                    <Text numberOfLines={1} style={styles.documentTypeText}>
+                      Type: {doc.documentType ?? 'N/A'}
+                    </Text>
                   </View>
                   <View style={styles.cardActions}>
                     <Pressable style={styles.actionButton} onPress={() => onDocumentViewPress?.(doc)}>
@@ -157,7 +166,7 @@ function DocumentsTabContent({ selectedCompany, onDocumentViewPress }: Documents
                   <Text style={styles.cardDate}>
                     Uploaded: {doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
                   </Text>
-                  <Pressable>
+                  <Pressable onPress={() => onDocumentViewPress?.(doc)}>
                     <Text style={styles.cardLink}>View Details</Text>
                   </Pressable>
                 </View>
@@ -299,6 +308,14 @@ const getStyles = (colors: AppTheme) => {
     fontSize: 11,
     color: palette.accentText,
     fontWeight: '500',
+  },
+  documentTypeText: {
+    color: palette.documentTypeText,
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 16,
+    marginBottom: 2,
+    marginTop: 2,
   },
   cardActions: {
     flexDirection: 'row',

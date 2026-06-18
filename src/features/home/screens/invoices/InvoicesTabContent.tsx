@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
 import { useThemeColors, type AppTheme } from '../../../../theme/colors';
-import { fetchInvoicesForCompany, selectInvoicesForCompany } from '../../../../store/slices/invoicesSlice';
+import {
+  fetchInvoicesForCompany,
+  selectHasLoadedInvoicesForCompany,
+  selectInvoicesForCompany,
+} from '../../../../store/slices/invoicesSlice';
 import type { ClientInvoice } from '../../api/clientInvoicesApi';
 import type { CompanyCardItem } from '../quickAccess/CompanyCard';
 
@@ -270,6 +274,9 @@ function BillingTabContent({ onInvoicePress, onGoHome, selectedCompany }: Billin
   const apiInvoices = useAppSelector(state =>
     selectInvoicesForCompany(state, selectedCompany?.id),
   );
+  const hasLoadedInvoices = useAppSelector(state =>
+    selectHasLoadedInvoicesForCompany(state, selectedCompany?.id),
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const visibleApiInvoices = useMemo(
     () => apiInvoices.filter(invoice => invoiceMatchesCompany(invoice, selectedCompany)),
@@ -296,8 +303,12 @@ function BillingTabContent({ onInvoicePress, onGoHome, selectedCompany }: Billin
   }, [visibleApiInvoices, searchQuery]);
 
   useEffect(() => {
-    dispatch(fetchInvoicesForCompany({ companyId: selectedCompany?.id, token }));
-  }, [dispatch, selectedCompany?.id, token]);
+    if (!selectedCompany?.id || !token || hasLoadedInvoices) {
+      return;
+    }
+
+    dispatch(fetchInvoicesForCompany({ companyId: selectedCompany.id, token }));
+  }, [dispatch, hasLoadedInvoices, selectedCompany?.id, token]);
 
   return (
     <View style={styles.container}>
@@ -352,6 +363,14 @@ function BillingTabContent({ onInvoicePress, onGoHome, selectedCompany }: Billin
       </View>
 
       <View style={styles.invoiceList}>
+        {isLoading ? (
+          <View style={styles.loadingState}>
+            <ActivityIndicator size="large" color={palette.accentText} />
+            <Text style={[styles.stateText, { color: colors.muted }]}>
+              Loading invoices...
+            </Text>
+          </View>
+        ) : null}
         {!isLoading && errorMessage ? (
           <Text style={[styles.stateText, { color: colors.danger }]}>
             {errorMessage}
@@ -377,7 +396,7 @@ function BillingTabContent({ onInvoicePress, onGoHome, selectedCompany }: Billin
             </Pressable>
           </View>
         ) : null}
-        {invoices.map(invoice => {
+        {!isLoading && invoices.map(invoice => {
           const isOverdue = invoice.status === 'overdue';
           const statusColor = isOverdue ? '#dc2626' : '#16a34a';
           const statusBackground = isOverdue ? '#fee2e2' : '#dcfce7';
@@ -544,6 +563,11 @@ const getStyles = (colors: AppTheme) => {
   invoiceList: {
     gap: 12,
     marginTop: 18,
+  },
+  loadingState: {
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 40,
   },
   emptyState: {
     alignItems: 'center',

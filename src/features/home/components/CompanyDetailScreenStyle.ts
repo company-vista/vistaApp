@@ -20,7 +20,7 @@ export const styles = StyleSheet.create({
     requestChangesText: { fontSize: 12, fontWeight: '500' },
 
     /* scroll */
-    scrollContent: { paddingHorizontal: 10, paddingTop: 16, paddingBottom: 48 },
+    scrollContent: { paddingHorizontal: 4, paddingTop: 16, paddingBottom: 48 },
 
     /* hero card */
     heroCard: {
@@ -56,15 +56,18 @@ export const styles = StyleSheet.create({
 
     /* settings menu card */
     menuCard: {
+        alignSelf: 'stretch',
         borderRadius: 14,
         borderWidth: 1,
         overflow: 'hidden',
+        width: '100%',
     },
     menuRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 14,
+        minHeight: 68,
+        paddingHorizontal: 18,
+        paddingVertical: 16,
         gap: 14,
     },
     iconBubble: {

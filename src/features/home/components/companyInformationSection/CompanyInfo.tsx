@@ -23,7 +23,7 @@ const CompanyInfo: React.FC<CompanyInfoProps> = ({ companyData }) => {
     };
 
     return (
-        <View>
+        <View style={styles.container}>
             {/* HERO SECTION */}
             <View style={styles.heroSection}>
                 <View style={styles.companyNameRow}>
@@ -100,6 +100,7 @@ const CompanyInfo: React.FC<CompanyInfoProps> = ({ companyData }) => {
 export default CompanyInfo;
 
 const styles = StyleSheet.create({
+    container: { paddingHorizontal: 6 },
     heroSection: { marginBottom: 20, padding: 16 },
     companyNameRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     companyMainTitle: { fontSize: 18, fontWeight: '500' },

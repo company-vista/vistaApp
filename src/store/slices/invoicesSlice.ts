@@ -7,6 +7,8 @@ import {
 
 type InvoicesState = {
   byCompanyId: Record<string, ClientInvoice[]>;
+  loadedCompanyIds: Record<string, boolean>;
+  isAllLoaded: boolean;
   all: ClientInvoice[];
   errorMessage: string;
   isLoading: boolean;
@@ -14,6 +16,8 @@ type InvoicesState = {
 
 const initialState: InvoicesState = {
   byCompanyId: {},
+  loadedCompanyIds: {},
+  isAllLoaded: false,
   all: [],
   errorMessage: '',
   isLoading: false,
@@ -44,6 +48,8 @@ const invoicesSlice = createSlice({
   reducers: {
     clearInvoices(state) {
       state.byCompanyId = {};
+      state.loadedCompanyIds = {};
+      state.isAllLoaded = false;
       state.all = [];
       state.errorMessage = '';
       state.isLoading = false;
@@ -60,8 +66,10 @@ const invoicesSlice = createSlice({
         const { companyId, invoices } = action.payload;
         if (companyId) {
           state.byCompanyId[companyId] = invoices;
+          state.loadedCompanyIds[companyId] = true;
         } else {
           state.all = invoices;
+          state.isAllLoaded = true;
         }
       })
       .addCase(fetchInvoicesForCompany.rejected, (state, action) => {
@@ -84,5 +92,16 @@ export const selectInvoicesForCompany = createSelector(
       return invoicesState.byCompanyId[companyId] ?? [];
     }
     return invoicesState.all;
+  },
+);
+
+export const selectHasLoadedInvoicesForCompany = createSelector(
+  [selectInvoicesState, selectCompanyId],
+  (invoicesState, companyId): boolean => {
+    if (companyId) {
+      return invoicesState.loadedCompanyIds[companyId] === true;
+    }
+
+    return invoicesState.isAllLoaded;
   },
 );
