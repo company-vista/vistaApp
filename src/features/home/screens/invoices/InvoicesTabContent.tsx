@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
-import { useThemeColors } from '../../../../theme/colors';
+import { useThemeColors, type AppTheme } from '../../../../theme/colors';
 import { fetchInvoicesForCompany, selectInvoicesForCompany } from '../../../../store/slices/invoicesSlice';
 import type { ClientInvoice } from '../../api/clientInvoicesApi';
 import type { CompanyCardItem } from '../quickAccess/CompanyCard';
@@ -18,6 +18,28 @@ type Invoice = {
   status: 'paid' | 'overdue';
   statusText: string;
 };
+
+const HOME_HERO_COLORS = {
+  panel: '#0D2137',
+  accentBlue: '#85B7EB',
+  accentYellow: '#FAC775',
+  white: '#ffffff',
+};
+
+function getInvoicePalette(colors: AppTheme) {
+  const isDark = colors.mode === 'dark';
+
+  return {
+    primaryText: isDark ? colors.text : HOME_HERO_COLORS.panel,
+    accentText: isDark ? HOME_HERO_COLORS.accentBlue : '#2F6FAE',
+    actionSurface: isDark ? '#183A5C' : '#EAF4FF',
+    actionBorder: isDark ? 'rgba(133,183,235,0.35)' : '#C7DFF6',
+    iconSurface: isDark ? 'rgba(133,183,235,0.14)' : '#EAF4FF',
+    iconColor: isDark ? HOME_HERO_COLORS.accentBlue : HOME_HERO_COLORS.panel,
+    buttonText: isDark ? HOME_HERO_COLORS.accentBlue : HOME_HERO_COLORS.panel,
+    link: isDark ? HOME_HERO_COLORS.accentYellow : '#9A640F',
+  };
+}
 
 type BillingTabContentProps = {
   onInvoicePress?: (invoice: ClientInvoice) => void;
@@ -239,6 +261,8 @@ function invoiceMatchesCompany(
 
 function BillingTabContent({ onInvoicePress, onGoHome, selectedCompany }: BillingTabContentProps) {
   const colors = useThemeColors();
+  const palette = getInvoicePalette(colors);
+  const styles = getStyles(colors);
   const dispatch = useAppDispatch();
   const token = useAppSelector(state => state.auth.token);
   const isLoading = useAppSelector(state => state.invoices.isLoading);
@@ -249,7 +273,7 @@ function BillingTabContent({ onInvoicePress, onGoHome, selectedCompany }: Billin
   const [searchQuery, setSearchQuery] = useState('');
   const visibleApiInvoices = useMemo(
     () => apiInvoices.filter(invoice => invoiceMatchesCompany(invoice, selectedCompany)),
-    [apiInvoices, selectedCompany?.id, selectedCompany?.name],
+    [apiInvoices, selectedCompany],
   );
   const invoices = useMemo(() => {
     const mapped = visibleApiInvoices.map(mapInvoice);
@@ -279,8 +303,8 @@ function BillingTabContent({ onInvoicePress, onGoHome, selectedCompany }: Billin
     <View style={styles.container}>
       <View style={styles.titleRow}>
         <View>
-          <Text style={[styles.title, { color: colors.text }]}>Invoices</Text>
-          <Text style={[styles.companyName, { color: colors.muted }]}>
+          <Text style={styles.title}>Invoices</Text>
+          <Text style={styles.companyName}>
             {selectedCompany?.name ?? 'All companies'}
           </Text>
         </View>
@@ -292,14 +316,14 @@ function BillingTabContent({ onInvoicePress, onGoHome, selectedCompany }: Billin
             styles.searchBox,
             { backgroundColor: colors.surface, borderColor: colors.border },
           ]}>
-          <FontAwesome name="search" size={17} color={colors.muted} />
+          <FontAwesome name="search" size={17} color={palette.accentText} />
           <TextInput
             editable={!isLoading}
             placeholder="Search by invoice no. or amount"
             placeholderTextColor={colors.muted}
             value={searchQuery}
             onChangeText={setSearchQuery}
-            style={[styles.searchInput, { color: colors.text }]}
+            style={styles.searchInput}
           />
         </View>
         <View
@@ -307,7 +331,7 @@ function BillingTabContent({ onInvoicePress, onGoHome, selectedCompany }: Billin
             styles.filterButton,
             { backgroundColor: colors.surface, borderColor: colors.border },
           ]}>
-          <FontAwesome name="filter" size={17} color="#4f46e5" />
+          <FontAwesome name="filter" size={17} color={palette.iconColor} />
           <Text style={styles.filterText}>Filters</Text>
         </View>
       </View>
@@ -323,7 +347,7 @@ function BillingTabContent({ onInvoicePress, onGoHome, selectedCompany }: Billin
         <View style={styles.sortRow}>
           <Text style={[styles.sortLabel, { color: colors.muted }]}>Sort by:</Text>
           <Text style={styles.sortValue}>Newest</Text>
-          <FontAwesome name="angle-down" size={18} color="#4f46e5" />
+          <FontAwesome name="angle-down" size={18} color={palette.accentText} />
         </View>
       </View>
 
@@ -347,9 +371,9 @@ function BillingTabContent({ onInvoicePress, onGoHome, selectedCompany }: Billin
               onPress={() => {
                 onGoHome?.();
               }}
-              style={[styles.homeButton, { backgroundColor: colors.primary }]}
+              style={styles.homeButton}
             >
-              <Text style={[styles.text, { color: colors.onPrimary || 'white' }]}>Go To Home</Text>
+              <Text style={styles.text}>Go To Home</Text>
             </Pressable>
           </View>
         ) : null}
@@ -371,23 +395,23 @@ function BillingTabContent({ onInvoicePress, onGoHome, selectedCompany }: Billin
               ]}>
               <View style={styles.invoiceLeft}>
                 <View style={styles.invoiceIcon}>
-                  <FontAwesome name="building-o" size={24} color="#4f46e5" />
+                  <FontAwesome name="building-o" size={22} color={palette.iconColor} />
                 </View>
                 <View style={styles.invoiceCopy}>
-                  <Text style={[styles.invoiceId, { color: colors.text }]}>
+                  <Text style={styles.invoiceId}>
                     {invoice.id}
                   </Text>
-                  <Text style={[styles.invoiceCompany, { color: colors.text }]}>
+                  <Text style={styles.invoiceCompany}>
                     {invoice.company}
                   </Text>
                   <View style={styles.metaRow}>
-                    <FontAwesome name="calendar" size={13} color={colors.muted} />
-                    <Text style={[styles.metaText, { color: colors.muted }]}>
+                    <FontAwesome name="calendar" size={13} color={palette.accentText} />
+                    <Text style={styles.metaText}>
                       Created: {invoice.created}
                     </Text>
                   </View>
                   <View style={styles.metaRow}>
-                    <FontAwesome name="calendar" size={13} color={colors.muted} />
+                    <FontAwesome name="calendar" size={13} color={palette.accentText} />
                     <Text
                       style={[
                         styles.metaText,
@@ -400,7 +424,7 @@ function BillingTabContent({ onInvoicePress, onGoHome, selectedCompany }: Billin
               </View>
 
               <View style={styles.invoiceRight}>
-                <Text style={[styles.amount, { color: colors.text }]}>
+                <Text style={styles.amount}>
                   {invoice.amount}
                 </Text>
                 <View style={styles.statusActionRow}>
@@ -411,8 +435,8 @@ function BillingTabContent({ onInvoicePress, onGoHome, selectedCompany }: Billin
                   </View>
                   <Pressable
                     onPress={() => onInvoicePress?.(invoice.raw)}
-                    style={[styles.actionButton, { borderColor: colors.border }]}>
-                    <FontAwesome name="eye" size={16} color={colors.muted} />
+                    style={styles.actionButton}>
+                    <FontAwesome name="eye" size={15} color={palette.iconColor} />
                   </Pressable>
                 </View>
                 <Text style={[styles.statusDetail, { color: statusColor }]}>
@@ -427,7 +451,10 @@ function BillingTabContent({ onInvoicePress, onGoHome, selectedCompany }: Billin
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: AppTheme) => {
+  const palette = getInvoicePalette(colors);
+
+  return StyleSheet.create({
   container: {
     paddingTop: 18,
   },
@@ -435,11 +462,13 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   title: {
+    color: palette.primaryText,
     fontSize: 20,
     fontWeight: '400',
     letterSpacing: 0,
   },
   companyName: {
+    color: palette.accentText,
     fontSize: 17,
     fontWeight: '500',
     marginTop: 4,
@@ -459,6 +488,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   searchInput: {
+    color: palette.primaryText,
     flex: 1,
     fontSize: 14,
     fontWeight: '400',
@@ -476,7 +506,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   filterText: {
-    color: '#4f46e5',
+    color: palette.buttonText,
     fontSize: 15,
     fontWeight: '600',
   },
@@ -501,7 +531,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   sortValue: {
-    color: '#4f46e5',
+    color: palette.link,
     fontSize: 14,
     fontWeight: '900',
   },
@@ -523,11 +553,15 @@ const styles = StyleSheet.create({
     marginTop: 130
   },
   homeButton:{
+    backgroundColor: palette.actionSurface,
+    borderColor: palette.actionBorder,
+    borderWidth: 1,
     padding: 10,
     borderRadius: 10,
     alignItems: 'center',
   },
   text: {
+    color: palette.buttonText,
     fontWeight: '600',
   },
   invoiceCard: {
@@ -548,7 +582,9 @@ const styles = StyleSheet.create({
   },
   invoiceIcon: {
     alignItems: 'center',
-    backgroundColor: '#f0ebff',
+    backgroundColor: palette.iconSurface,
+    borderColor: palette.actionBorder,
+    borderWidth: 1,
     borderRadius: 18,
     height: 40,
     justifyContent: 'center',
@@ -559,11 +595,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   invoiceId: {
+    color: palette.primaryText,
     fontSize: 14,
     fontWeight: '600',
     letterSpacing: 0,
   },
   invoiceCompany: {
+    color: palette.primaryText,
     fontSize: 15,
     fontWeight: '600',
     marginTop: 7,
@@ -574,6 +612,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   metaText: {
+    color: palette.accentText,
     fontSize: 12,
     fontWeight: '400',
     marginLeft: 8,
@@ -582,7 +621,7 @@ const styles = StyleSheet.create({
     color: '#dc2626',
   },
   paidDueText: {
-    color: '#4f46e5',
+    color: palette.accentText,
   },
   invoiceRight: {
     alignItems: 'flex-end',
@@ -590,6 +629,7 @@ const styles = StyleSheet.create({
     width: 112,
   },
   amount: {
+    color: palette.primaryText,
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: 0,
@@ -618,12 +658,15 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     alignItems: 'center',
+    backgroundColor: palette.actionSurface,
+    borderColor: palette.actionBorder,
     borderRadius: 10,
     borderWidth: 1,
     height: 32,
     justifyContent: 'center',
     width: 32,
   },
-});
+  });
+};
 
 export default BillingTabContent;

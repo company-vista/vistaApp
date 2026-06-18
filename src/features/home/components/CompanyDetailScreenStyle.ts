@@ -8,27 +8,26 @@ export const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 2,
-        paddingTop: 14,
+        paddingHorizontal: 10,
+        paddingTop: 48,
         paddingBottom: 12,
         borderBottomWidth: StyleSheet.hairlineWidth,
         gap: 16,
     },
-    backBtn: { width: 28, alignItems: 'flex-start', justifyContent: 'center' },
     headerLeft: { flexDirection: 'row', alignItems: 'center', flex: 1, gap: 4 },
     editBtn: { alignItems: 'flex-end' },
     headerTitle: { fontSize: 16, fontWeight: '600', textAlign: 'left' },
     requestChangesText: { fontSize: 12, fontWeight: '500' },
 
     /* scroll */
-    scrollContent: { paddingHorizontal: 4, paddingTop: 16, paddingBottom: 40 },
+    scrollContent: { paddingHorizontal: 10, paddingTop: 16, paddingBottom: 48 },
 
     /* hero card */
     heroCard: {
         flexDirection: 'row',
         alignItems: 'center',
         borderRadius: 14,
-        padding: 14,
+        padding: 10,
         borderWidth: 1,
         marginBottom: 16,
         gap: 12,

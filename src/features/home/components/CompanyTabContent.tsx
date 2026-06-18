@@ -1,19 +1,20 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { useThemeColors } from '../../../theme/colors';
-import CompanyDetailScreen from './CompanyDetailScreen';
+import CompanyDetailScreen, { type CompanyDetailSection } from './CompanyDetailScreen';
 import type { CompanyCardItem } from '../screens/quickAccess/CompanyCard';
 
 type CompanyTabContentProps = {
+  onSectionPress?: (section: CompanyDetailSection) => void;
   selectedCompany: CompanyCardItem | null;
 };
 
-function CompanyTabContent({ selectedCompany }: CompanyTabContentProps) {
-  const colors = useThemeColors();
-
+function CompanyTabContent({ onSectionPress, selectedCompany }: CompanyTabContentProps) {
   return (
     <View style={styles.container}>
-      <CompanyDetailScreen selectedCompany={selectedCompany} />
+      <CompanyDetailScreen
+        selectedCompany={selectedCompany}
+        onSectionPress={onSectionPress}
+      />
     </View>
   );
 }

@@ -26,9 +26,9 @@ import {
 import { mapCompanyToListItem } from './quickAccess/companyListItem';
 import BillingTabContent from './invoices/InvoicesTabContent';
 import CompanyTabContent from '../components/CompanyTabContent';
+import CompanyDetailScreen, { type CompanyDetailSection } from '../components/CompanyDetailScreen';
 import DocumentsTabContent from './documents/DocumentsTabContent';
 import DocumentViewScreen from './documents/DocumentViewScreen';
-import InvoiceDetailScreen from './invoices/InvoiceDetailScreen';
 import ManageCompanyScreen from './ManageCompanyScreen';
 import type { DocumentItem } from '../api/clientDocumentApi';
 import HomeTabContent from '../components/HomeTabContent';
@@ -67,7 +67,7 @@ function HomeScreen({
   initialTab,
   onFollowUsPress,
   onHelpFeedbackPress,
-  onGoHome,
+  onGoHome: _onGoHome,
   onInvoicePress,
   onNotificationPress,
   onProfilePress,
@@ -88,6 +88,7 @@ function HomeScreen({
   const [searchQuery, setSearchQuery] = useState('');
   const [notificationCount, setNotificationCount] = useState(0);
   const [selectedCompany, setSelectedCompany] = useState<CompanyCardItem | null>(null);
+  const [activeCompanySection, setActiveCompanySection] = useState<CompanyDetailSection | null>(null);
   const [selectedDocument, setSelectedDocument] = useState<DocumentItem | null>(null);
   const [isManageScreenOpen, setIsManageScreenOpen] = useState(false);
   const [companyOptions, setCompanyOptions] = useState<CompanyCardItem[]>([]);
@@ -351,6 +352,16 @@ function HomeScreen({
     );
   }
 
+  if (activeCompanySection) {
+    return (
+      <CompanyDetailScreen
+        activeSection={activeCompanySection}
+        selectedCompany={selectedCompany}
+        onBackPress={() => setActiveCompanySection(null)}
+      />
+    );
+  }
+
   if (isManageScreenOpen) {
     return (
       <ManageCompanyScreen
@@ -433,7 +444,12 @@ function HomeScreen({
             onQuickAccessViewAllPress={onQuickAccessViewAllPress}
           />
         ) : null}
-        {activeTab === 'company' ? <CompanyTabContent selectedCompany={selectedCompany} /> : null}
+        {activeTab === 'company' ? (
+          <CompanyTabContent
+            selectedCompany={selectedCompany}
+            onSectionPress={setActiveCompanySection}
+          />
+        ) : null}
         {activeTab === 'reports' ? <ReportsTabContent /> : null}
         {activeTab === 'billing' ? (
           <BillingTabContent

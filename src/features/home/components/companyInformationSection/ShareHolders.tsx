@@ -21,7 +21,7 @@ const mockShareholders: Shareholder[] = [
   { id: '4', name: 'Dave Patel', shares: 2500, percentage: 30 },
 ];
 
-const ShareHolders: React.FC<ShareHoldersProps> = ({ companyId }) => {
+const ShareHolders: React.FC<ShareHoldersProps> = ({ companyId: _companyId }) => {
   const colors = useThemeColors();
   // In a full implementation you would use companyId to fetch the data
   const data = mockShareholders;
@@ -52,7 +52,7 @@ const ShareHolders: React.FC<ShareHoldersProps> = ({ companyId }) => {
 const styles = StyleSheet.create({
   container: {
     borderRadius: 10,
-    padding: 14,
+    padding: 16,
     marginBottom: 14,
     borderWidth: 1,
   },

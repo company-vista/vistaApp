@@ -8,6 +8,29 @@ import { fetchCompanyDocuments, type DocumentItem } from '../../api/clientDocume
 import type { CompanyCardItem } from '../quickAccess/CompanyCard';
 
 const FILTERS = ['All Docs', 'Recent', 'Compliance', 'Reports'];
+const HOME_HERO_COLORS = {
+  panel: '#0D2137',
+  accentBlue: '#85B7EB',
+  accentYellow: '#FAC775',
+  white: '#ffffff',
+};
+
+function getDocumentPalette(colors: AppTheme) {
+  const isDark = colors.mode === 'dark';
+
+  return {
+    primaryText: isDark ? colors.text : HOME_HERO_COLORS.panel,
+    accentText: isDark ? HOME_HERO_COLORS.accentBlue : '#2F6FAE',
+    panelButton: isDark ? '#183A5C' : HOME_HERO_COLORS.panel,
+    actionSurface: isDark ? '#183A5C' : '#EAF4FF',
+    actionBorder: isDark ? 'rgba(133,183,235,0.35)' : '#C7DFF6',
+    iconSurface: isDark ? 'rgba(133,183,235,0.14)' : '#EAF4FF',
+    iconColor: isDark ? HOME_HERO_COLORS.accentBlue : HOME_HERO_COLORS.panel,
+    fileIconColor: isDark ? HOME_HERO_COLORS.accentBlue : HOME_HERO_COLORS.panel,
+    link: isDark ? HOME_HERO_COLORS.accentYellow : '#9A640F',
+    activeText: HOME_HERO_COLORS.white,
+  };
+}
 
 type DocumentsTabContentProps = {
   selectedCompany?: CompanyCardItem | null;
@@ -23,6 +46,7 @@ function DocumentsTabContent({ selectedCompany, onDocumentViewPress }: Documents
   const token = useAppSelector(state => state.auth.token);
   const colors = useThemeColors();
   const styles = getStyles(colors);
+  const palette = getDocumentPalette(colors);
 
   useEffect(() => {
     let isMounted = true;
@@ -70,7 +94,7 @@ function DocumentsTabContent({ selectedCompany, onDocumentViewPress }: Documents
 
         {/* Search */}
         <View style={styles.searchContainer}>
-          <FontAwesome name="search" size={16} color={colors.subtle} />
+          <FontAwesome name="search" size={16} color={palette.accentText} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search documents..."
@@ -103,13 +127,13 @@ function DocumentsTabContent({ selectedCompany, onDocumentViewPress }: Documents
         {/* Document List */}
         <View style={styles.listContainer}>
           {isLoading ? (
-            <ActivityIndicator size="large" color={colors.text} style={{ marginTop: 40 }} />
+            <ActivityIndicator size="large" color={palette.accentText} style={{ marginTop: 40 }} />
           ) : filteredDocuments.length > 0 ? (
             filteredDocuments.map((doc, index) => (
               <View key={doc._id ?? String(index)} style={styles.card}>
                 <View style={styles.cardTop}>
                   <View style={styles.cardIconContainer}>
-                    <FontAwesome name="file-text-o" size={18} color={colors.primary} />
+                    <FontAwesome name="file-text-o" size={17} color={palette.fileIconColor} />
                   </View>
                   <View style={styles.cardInfo}>
                     <Text style={styles.cardTitle}>{doc.companyName ?? 'Company'}</Text>
@@ -119,10 +143,10 @@ function DocumentsTabContent({ selectedCompany, onDocumentViewPress }: Documents
                   </View>
                   <View style={styles.cardActions}>
                     <Pressable style={styles.actionButton} onPress={() => onDocumentViewPress?.(doc)}>
-                      <FontAwesome name="eye" size={16} color={colors.text} />
+                      <FontAwesome name="eye" size={15} color={palette.iconColor} />
                     </Pressable>
                     <Pressable style={styles.actionButton}>
-                      <FontAwesome name="download" size={16} color={colors.text} />
+                      <FontAwesome name="download" size={15} color={palette.iconColor} />
                     </Pressable>
                   </View>
                 </View>
@@ -148,7 +172,10 @@ function DocumentsTabContent({ selectedCompany, onDocumentViewPress }: Documents
   );
 }
 
-const getStyles = (colors: AppTheme) => StyleSheet.create({
+const getStyles = (colors: AppTheme) => {
+  const palette = getDocumentPalette(colors);
+
+  return StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 16,
@@ -167,25 +194,25 @@ const getStyles = (colors: AppTheme) => StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: colors.text,
+    color: palette.primaryText,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: colors.muted,
+    color: palette.accentText,
     marginTop: 2,
   },
   totalBadge: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
-    backgroundColor: colors.surfaceAlt,
+    backgroundColor: palette.panelButton,
     justifyContent: 'center',
     alignItems: 'center',
   },
   totalBadgeText: {
     fontSize: 13,
     fontWeight: '700',
-    color: colors.primary,
+    color: HOME_HERO_COLORS.accentBlue,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -202,7 +229,7 @@ const getStyles = (colors: AppTheme) => StyleSheet.create({
     flex: 1,
     marginLeft: 10,
     fontSize: 16,
-    color: colors.text,
+    color: palette.primaryText,
   },
   filtersContainer: {
     gap: 12,
@@ -214,19 +241,19 @@ const getStyles = (colors: AppTheme) => StyleSheet.create({
     borderRadius: 16,
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: palette.accentText,
   },
   filterButtonActive: {
-    backgroundColor: colors.text,
-    borderColor: colors.text,
+    backgroundColor: palette.panelButton,
+    borderColor: palette.panelButton,
   },
   filterText: {
     fontSize: 12,
     fontWeight: '600',
-    color: colors.muted,
+    color: palette.accentText,
   },
   filterTextActive: {
-    color: colors.background,
+    color: palette.activeText,
   },
   listContainer: {
     gap: 16,
@@ -248,13 +275,15 @@ const getStyles = (colors: AppTheme) => StyleSheet.create({
     alignItems: 'center',
   },
   cardIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.surfaceAlt,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: palette.iconSurface,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
+    borderWidth: 1,
+    borderColor: palette.actionBorder,
   },
   cardInfo: {
     flex: 1,
@@ -263,12 +292,12 @@ const getStyles = (colors: AppTheme) => StyleSheet.create({
   cardTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: colors.text,
+    color: palette.primaryText,
     marginBottom: 2,
   },
   cardSubtitle: {
     fontSize: 11,
-    color: colors.muted,
+    color: palette.accentText,
     fontWeight: '500',
   },
   cardActions: {
@@ -279,11 +308,11 @@ const getStyles = (colors: AppTheme) => StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: colors.background,
+    backgroundColor: palette.actionSurface,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: palette.actionBorder,
   },
   cardDivider: {
     height: 1,
@@ -297,13 +326,14 @@ const getStyles = (colors: AppTheme) => StyleSheet.create({
   },
   cardDate: {
     fontSize: 11,
-    color: colors.muted,
+    color: palette.accentText,
   },
   cardLink: {
     fontSize: 12,
     fontWeight: '700',
-    color: colors.primary,
+    color: palette.link,
   },
-});
+  });
+};
 
 export default DocumentsTabContent;

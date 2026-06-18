@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  StyleSheet,
   Text,
   View,
   ScrollView,
@@ -11,15 +10,20 @@ import {
 import { styles } from "./CompanyDetailScreenStyle"
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { useThemeColors } from '../../../theme/colors';
+import BackButton from '../../../components/buttons/BackButton';
 import type { CompanyCardItem } from '../screens/quickAccess/CompanyCard';
 import CompanyInfo from './companyInformationSection/CompanyInfo';
 import ShareHolders from './companyInformationSection/ShareHolders';
 
 type CompanyDetailScreenProps = {
+  activeSection?: CompanyDetailSection;
+  onBackPress?: () => void;
+  onSectionPress?: (section: CompanyDetailSection) => void;
   selectedCompany: CompanyCardItem | null;
 };
 
-type Section = 'companyInfo' | 'shareholders' | null;
+export type CompanyDetailSection = 'companyInfo' | 'shareholders';
+type Section = CompanyDetailSection | null;
 
 type MenuItem = {
   id: Section;
@@ -34,10 +38,35 @@ const menuItems: MenuItem[] = [
   { id: 'shareholders', label: 'Shareholders', icon: 'users', iconBg: '#F0FDF4', iconColor: '#16A34A' },
 ];
 
-const CompanyDetailScreen: React.FC<CompanyDetailScreenProps> = ({ selectedCompany }) => {
+const CompanyDetailScreen: React.FC<CompanyDetailScreenProps> = ({
+  activeSection: controlledActiveSection,
+  onBackPress,
+  onSectionPress,
+  selectedCompany,
+}) => {
   const colors = useThemeColors();
   const companyData = selectedCompany;
-  const [activeSection, setActiveSection] = useState<Section>(null);
+  const [localActiveSection, setLocalActiveSection] = useState<Section>(null);
+  const activeSection = controlledActiveSection ?? localActiveSection;
+  const isControlledSection = controlledActiveSection !== undefined;
+
+  function handleBackPress() {
+    if (isControlledSection) {
+      onBackPress?.();
+      return;
+    }
+
+    setLocalActiveSection(null);
+  }
+
+  function handleSectionPress(section: CompanyDetailSection) {
+    if (onSectionPress) {
+      onSectionPress(section);
+      return;
+    }
+
+    setLocalActiveSection(section);
+  }
 
   /* ── empty state ─────────────────────────────────────────────── */
   if (!companyData) {
@@ -88,12 +117,7 @@ const CompanyDetailScreen: React.FC<CompanyDetailScreenProps> = ({ selectedCompa
         {/* Left: back btn only (sub-section) OR title (main screen) */}
         <View style={styles.headerLeft}>
           {activeSection ? (
-            <TouchableOpacity
-              onPress={() => setActiveSection(null)}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              style={styles.backBtn}>
-              <FontAwesome name="angle-left" size={22} color={colors.text} />
-            </TouchableOpacity>
+            <BackButton onPress={handleBackPress} />
           ) : (
             <Text style={[styles.headerTitle, { color: colors.text }]}>
               Company Info
@@ -147,7 +171,7 @@ const CompanyDetailScreen: React.FC<CompanyDetailScreenProps> = ({ selectedCompa
               <View key={item.id}>
                 <TouchableOpacity
                   activeOpacity={0.7}
-                  onPress={() => setActiveSection(item.id)}
+                  onPress={() => item.id && handleSectionPress(item.id)}
                   style={styles.menuRow}>
                   {/* Icon bubble */}
                   <View style={[styles.iconBubble, { backgroundColor: item.iconBg }]}>
@@ -175,4 +199,3 @@ const CompanyDetailScreen: React.FC<CompanyDetailScreenProps> = ({ selectedCompa
 };
 
 export default CompanyDetailScreen;
-

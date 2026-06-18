@@ -9,9 +9,31 @@ import {
 } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
-import { useThemeColors } from '../../../../theme/colors';
+import { useThemeColors, type AppTheme } from '../../../../theme/colors';
 import type { DocumentItem } from '../../api/clientDocumentApi';
 import BackButton from '../../../../components/buttons/BackButton';
+
+const HOME_HERO_COLORS = {
+  panel: '#0D2137',
+  accentBlue: '#85B7EB',
+  accentYellow: '#FAC775',
+  accentPink: '#F09595',
+};
+
+function getDocumentPalette(colors: AppTheme) {
+  const isDark = colors.mode === 'dark';
+
+  return {
+    primaryText: isDark ? colors.text : HOME_HERO_COLORS.panel,
+    accentText: isDark ? HOME_HERO_COLORS.accentBlue : '#2F6FAE',
+    panelButton: isDark ? '#183A5C' : HOME_HERO_COLORS.panel,
+    panelButtonBorder: isDark ? 'rgba(133,183,235,0.35)' : '#C7DFF6',
+    iconSurface: isDark ? 'rgba(133,183,235,0.14)' : '#EAF4FF',
+    iconColor: isDark ? HOME_HERO_COLORS.accentBlue : HOME_HERO_COLORS.panel,
+    statusActive: isDark ? HOME_HERO_COLORS.accentYellow : '#9A640F',
+    statusWarning: HOME_HERO_COLORS.accentPink,
+  };
+}
 
 type DocumentViewScreenProps = {
   document: DocumentItem;
@@ -20,6 +42,7 @@ type DocumentViewScreenProps = {
 
 function DocumentViewScreen({ document: doc, onBackPress }: DocumentViewScreenProps) {
   const colors = useThemeColors();
+  const palette = getDocumentPalette(colors);
 
   const uploadedDate = doc.uploadedAt
     ? new Date(doc.uploadedAt).toLocaleDateString('en-GB', {
@@ -45,8 +68,8 @@ function DocumentViewScreen({ document: doc, onBackPress }: DocumentViewScreenPr
 
   const statusColor =
     doc.status === 'active' || doc.status === 'Active'
-      ? { bg: '#E6F4EA', text: '#137333', dot: '#1E8E3E' }
-      : { bg: '#FEF3C7', text: '#92400E', dot: '#D97706' };
+      ? { bg: palette.panelButton, text: palette.statusActive, dot: palette.statusActive }
+      : { bg: palette.panelButton, text: palette.statusWarning, dot: palette.statusWarning };
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]}>
@@ -58,7 +81,7 @@ function DocumentViewScreen({ document: doc, onBackPress }: DocumentViewScreenPr
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: colors.border, backgroundColor: colors.background }]}>
         <BackButton onPress={onBackPress} />
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Document Details</Text>
+        <Text style={[styles.headerTitle, { color: palette.primaryText }]}>Document Details</Text>
         <View style={{ width: 36 }} />
       </View>
 
@@ -69,13 +92,13 @@ function DocumentViewScreen({ document: doc, onBackPress }: DocumentViewScreenPr
 
         {/* Hero card */}
         <View style={[styles.heroCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <View style={[styles.heroIcon, { backgroundColor: colors.surfaceAlt }]}>
-            <FontAwesome name="file-text-o" size={32} color={colors.primary} />
+          <View style={[styles.heroIcon, { backgroundColor: palette.iconSurface, borderColor: palette.panelButtonBorder }]}>
+            <FontAwesome name="file-text-o" size={30} color={palette.iconColor} />
           </View>
-          <Text style={[styles.heroFileName, { color: colors.text }]} numberOfLines={2}>
+          <Text style={[styles.heroFileName, { color: palette.primaryText }]} numberOfLines={2}>
             {doc.originalFileName ?? doc.fileName ?? 'Document'}
           </Text>
-          <Text style={[styles.heroCompany, { color: colors.muted }]}>
+          <Text style={[styles.heroCompany, { color: palette.accentText }]}>
             {doc.companyName ?? '—'}
           </Text>
 
@@ -91,38 +114,38 @@ function DocumentViewScreen({ document: doc, onBackPress }: DocumentViewScreenPr
 
         {/* Document Info */}
         <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Document Information</Text>
+          <Text style={[styles.sectionTitle, { color: palette.primaryText }]}>Document Information</Text>
 
-          <InfoRow label="Document Type" value={doc.documentType ?? '—'} colors={colors} />
+          <InfoRow label="Document Type" value={doc.documentType ?? '—'} palette={palette} />
           <Divider color={colors.border} />
-          <InfoRow label="File Name" value={doc.originalFileName ?? doc.fileName ?? '—'} colors={colors} />
+          <InfoRow label="File Name" value={doc.originalFileName ?? doc.fileName ?? '—'} palette={palette} />
           <Divider color={colors.border} />
-          <InfoRow label="File Size" value={fileSizeText} colors={colors} />
+          <InfoRow label="File Size" value={fileSizeText} palette={palette} />
           <Divider color={colors.border} />
-          <InfoRow label="MIME Type" value={doc.mimeType ?? '—'} colors={colors} />
+          <InfoRow label="MIME Type" value={doc.mimeType ?? '—'} palette={palette} />
           <Divider color={colors.border} />
-          <InfoRow label="Source Group" value={doc.sourceGroup ?? '—'} colors={colors} />
+          <InfoRow label="Source Group" value={doc.sourceGroup ?? '—'} palette={palette} />
         </View>
 
         {/* Upload Info */}
         <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Upload Information</Text>
+          <Text style={[styles.sectionTitle, { color: palette.primaryText }]}>Upload Information</Text>
 
-          <InfoRow label="Uploaded By" value={doc.uploadedBy ?? '—'} colors={colors} />
+          <InfoRow label="Uploaded By" value={doc.uploadedBy ?? '—'} palette={palette} />
           <Divider color={colors.border} />
-          <InfoRow label="Uploaded At" value={uploadedDate} colors={colors} />
+          <InfoRow label="Uploaded At" value={uploadedDate} palette={palette} />
           <Divider color={colors.border} />
-          <InfoRow label="Created At" value={createdDate} colors={colors} />
+          <InfoRow label="Created At" value={createdDate} palette={palette} />
           <Divider color={colors.border} />
-          <InfoRow label="Country" value={doc.country ?? '—'} colors={colors} />
+          <InfoRow label="Country" value={doc.country ?? '—'} palette={palette} />
         </View>
 
         {/* Company Info */}
         <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Company Information</Text>
-          <InfoRow label="Company Name" value={doc.companyName ?? '—'} colors={colors} />
+          <Text style={[styles.sectionTitle, { color: palette.primaryText }]}>Company Information</Text>
+          <InfoRow label="Company Name" value={doc.companyName ?? '—'} palette={palette} />
           <Divider color={colors.border} />
-          <InfoRow label="Company ID" value={doc.companyId ?? '—'} colors={colors} />
+          <InfoRow label="Company ID" value={doc.companyId ?? '—'} palette={palette} />
         </View>
 
       </ScrollView>
@@ -135,14 +158,14 @@ function DocumentViewScreen({ document: doc, onBackPress }: DocumentViewScreenPr
 type InfoRowProps = {
   label: string;
   value: string;
-  colors: ReturnType<typeof useThemeColors>;
+  palette: ReturnType<typeof getDocumentPalette>;
 };
 
-function InfoRow({ label, value, colors }: InfoRowProps) {
+function InfoRow({ label, value, palette }: InfoRowProps) {
   return (
     <View style={styles.infoRow}>
-      <Text style={[styles.infoLabel, { color: colors.subtle }]}>{label.toUpperCase()}</Text>
-      <Text style={[styles.infoValue, { color: colors.text }]}>{value}</Text>
+      <Text style={[styles.infoLabel, { color: palette.accentText }]}>{label.toUpperCase()}</Text>
+      <Text style={[styles.infoValue, { color: palette.primaryText }]}>{value}</Text>
     </View>
   );
 }
@@ -190,6 +213,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
+    borderWidth: 1,
   },
   heroFileName: {
     fontSize: 16,
