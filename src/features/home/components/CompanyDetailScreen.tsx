@@ -3,11 +3,12 @@ import {
   Text,
   View,
   ScrollView,
-  SafeAreaView,
   StatusBar,
   TouchableOpacity,
 } from 'react-native';
-import { styles } from "./CompanyDetailScreenStyle"
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { styles } from "./CompanyDetailScreenStyle";
+// Vector icons badal kar image ke style se match kiya
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { useThemeColors } from '../../../theme/colors';
 import BackButton from '../../../components/buttons/BackButton';
@@ -35,7 +36,7 @@ type MenuItem = {
 
 const menuItems: MenuItem[] = [
   { id: 'companyInfo', label: 'Company Information', icon: 'building', iconBg: '#EEF2FF', iconColor: '#4F46E5' },
-  { id: 'shareholders', label: 'Shareholders', icon: 'users', iconBg: '#F0FDF4', iconColor: '#16A34A' },
+  { id: 'shareholders', label: 'Shareholders', icon: 'users', iconBg: '#E6F4EA', iconColor: '#137333' },
 ];
 
 const CompanyDetailScreen: React.FC<CompanyDetailScreenProps> = ({
@@ -45,6 +46,7 @@ const CompanyDetailScreen: React.FC<CompanyDetailScreenProps> = ({
   selectedCompany,
 }) => {
   const colors = useThemeColors();
+  const insets = useSafeAreaInsets();
   const companyData = selectedCompany;
   const [localActiveSection, setLocalActiveSection] = useState<Section>(null);
   const activeSection = controlledActiveSection ?? localActiveSection;
@@ -55,7 +57,6 @@ const CompanyDetailScreen: React.FC<CompanyDetailScreenProps> = ({
       onBackPress?.();
       return;
     }
-
     setLocalActiveSection(null);
   }
 
@@ -64,14 +65,13 @@ const CompanyDetailScreen: React.FC<CompanyDetailScreenProps> = ({
       onSectionPress(section);
       return;
     }
-
     setLocalActiveSection(section);
   }
 
   /* ── empty state ─────────────────────────────────────────────── */
   if (!companyData) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top, paddingBottom: insets.bottom }]}>
         <StatusBar
           barStyle={colors.mode === 'dark' ? 'light-content' : 'dark-content'}
           backgroundColor={colors.background}
@@ -82,14 +82,16 @@ const CompanyDetailScreen: React.FC<CompanyDetailScreenProps> = ({
         <View style={styles.emptyState}>
           <Text style={[styles.emptyText, { color: colors.muted }]}>No company selected</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
-  const statusColor =
-    companyData.status === 'Active'
-      ? { bg: '#E6F4EA', text: '#137333', dot: '#1E8E3E' }
-      : { bg: '#FCE8E6', text: '#C5221F', dot: '#D93025' };
+  // TypeScript Error Fixed: Case-insensitive dynamic comparison strictly using String wrapper
+  const isCompanyActive = String(companyData.status).toUpperCase() === 'ACTIVE';
+
+  const statusColor = isCompanyActive
+    ? { bg: '#E6F4EA', text: '#0F9D58', dot: '#0F9D58' }
+    : { bg: '#FCE8E6', text: '#C5221F', dot: '#D93025' };
 
   /* ── sub-section view ────────────────────────────────────────── */
   const renderSection = () => {
@@ -98,7 +100,6 @@ const CompanyDetailScreen: React.FC<CompanyDetailScreenProps> = ({
         return <CompanyInfo companyData={companyData} />;
       case 'shareholders':
         return <ShareHolders companyId={companyData.id} />;
-
       default:
         return null;
     }
@@ -106,27 +107,27 @@ const CompanyDetailScreen: React.FC<CompanyDetailScreenProps> = ({
 
   /* ── main render ─────────────────────────────────────────────── */
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <StatusBar
         barStyle={colors.mode === 'dark' ? 'light-content' : 'dark-content'}
         backgroundColor={colors.background}
       />
 
       {/* ── HEADER ─────────────────────────────────────────── */}
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        {/* Left: back btn only (sub-section) OR title (main screen) */}
+      <View style={styles.header}>
         <View style={styles.headerLeft}>
-          {activeSection ? (
-            <BackButton onPress={handleBackPress} />
-          ) : (
-            <Text style={[styles.headerTitle, { color: colors.text }]}>
-              Company Info
-            </Text>
-          )}
+          <BackButton onPress={activeSection ? handleBackPress : onBackPress} />
+          <Text style={[styles.headerTitle, { color: colors.text }]}>
+            {activeSection === 'companyInfo'
+              ? 'Company Information'
+              : activeSection === 'shareholders'
+                ? 'Shareholders'
+                : 'Company Info'}
+          </Text>
         </View>
 
         <TouchableOpacity activeOpacity={0.7} style={styles.editBtn}>
-          <Text style={[styles.requestChangesText, { color: colors.primary }]}>
+          <Text style={styles.requestChangesText}>
             {activeSection ? 'Edit' : 'Request Changes'}
           </Text>
         </TouchableOpacity>
@@ -139,62 +140,75 @@ const CompanyDetailScreen: React.FC<CompanyDetailScreenProps> = ({
         {/* ── HERO CARD ─────────────────────────────────────── */}
         <View style={[styles.heroCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           {/* Avatar */}
-          <View style={[styles.avatarCircle, { backgroundColor: '#E0E7FF' }]}>
-            <Text style={styles.avatarText}>
-              {companyData.initials ?? companyData.name.slice(0, 2).toUpperCase()}
+          <View style={[styles.avatarCircle, { backgroundColor: colors.mode === 'dark' ? '#1E293B' : '#EEF2FF' }]}>
+            <Text style={[styles.avatarText, { color: colors.mode === 'dark' ? '#93C5FD' : '#4F46E5' }]}>
+              {companyData.initials ?? companyData.name?.slice(0, 1)?.toUpperCase()}
             </Text>
           </View>
 
-          {/* Name + Status */}
+          {/* Name + Details */}
           <View style={styles.heroInfo}>
-            <Text style={[styles.heroName, { color: colors.text }]} numberOfLines={1}>
-              {companyData.name}
-            </Text>
-            <Text style={[styles.heroMeta, { color: colors.muted }]}>
-              {companyData.companyType} · EIN {companyData.ein}
-            </Text>
-          </View>
+            {/* Name + Status row */}
+            <View style={styles.heroNameRow}>
+              <Text style={[styles.heroName, { color: colors.text }]} numberOfLines={1}>
+                {companyData.name}
+              </Text>
 
-          <View style={[styles.statusBadge, { backgroundColor: statusColor.bg }]}>
-            <View style={[styles.statusDot, { backgroundColor: statusColor.dot }]} />
-            <Text style={[styles.statusText, { color: statusColor.text }]}>{companyData.status}</Text>
+              {/* Status Badge */}
+              <View style={[styles.statusBadge, { backgroundColor: statusColor.bg }]}>
+                <View style={[styles.statusDot, { backgroundColor: statusColor.dot }]} />
+                <Text style={[styles.statusText, { color: statusColor.text }]}>
+                  {companyData.status?.toUpperCase()}
+                </Text>
+              </View>
+            </View>
+
+            {/* Mockup matching company details */}
+            <Text style={[styles.heroMetaText, { color: colors.muted }]}>
+              Your Company Name ·
+            </Text>
+            <View style={styles.einWrapperNo}>
+              <Text style={[styles.heroMetaText, { color: colors.muted }]}>
+                EIN
+              </Text>
+              <Text style={[styles.heroMetaText, { color: colors.muted }]}>
+                {companyData.ein ?? 'XX-XXXXXXX'}
+              </Text>
+            </View>
           </View>
         </View>
 
-        {/* ── SECTION CONTENT (when a row is selected) ────── */}
+        {/* ── SECTION CONTENT / MENU LIST ───────────────────── */}
         {activeSection ? (
           <View style={styles.sectionContent}>{renderSection()}</View>
         ) : (
-          /* ── SETTINGS-STYLE MENU LIST ───────────────────── */
-          <View style={[styles.menuCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            {menuItems.map((item, index) => (
-              <View key={item.id}>
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={() => item.id && handleSectionPress(item.id)}
-                  style={styles.menuRow}>
-                  {/* Icon bubble */}
-                  <View style={[styles.iconBubble, { backgroundColor: item.iconBg }]}>
-                    <FontAwesome name={item.icon} size={15} color={item.iconColor} />
-                  </View>
+          /* Image ke jaisa separated floating card style list */
+          <View style={styles.menuCard}>
+            {menuItems.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                activeOpacity={0.7}
+                onPress={() => item.id && handleSectionPress(item.id)}
+                style={[styles.menuRow, { backgroundColor: colors.surface, borderColor: colors.border }]}>
 
-                  {/* Label */}
-                  <Text style={[styles.menuLabel, { color: colors.text }]}>{item.label}</Text>
+                {/* Icon bubble */}
+                <View style={[styles.iconBubble, { backgroundColor: colors.mode === 'dark' ? 'rgba(79,70,229,0.15)' : item.iconBg }]}>
+                  <FontAwesome name={item.icon} size={16} color={colors.mode === 'dark' ? '#93C5FD' : item.iconColor} />
+                </View>
 
-                  {/* Chevron */}
-                  <FontAwesome name="angle-right" size={18} color={colors.muted} />
-                </TouchableOpacity>
+                {/* Label */}
+                <Text style={[styles.menuLabel, { color: colors.text }]}>
+                  {item.label}
+                </Text>
 
-                {/* Divider (skip after last item) */}
-                {index < menuItems.length - 1 && (
-                  <View style={[styles.divider, { backgroundColor: colors.border }]} />
-                )}
-              </View>
+                {/* Arrow Right */}
+                <FontAwesome name="angle-right" size={20} color={colors.muted} />
+              </TouchableOpacity>
             ))}
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 

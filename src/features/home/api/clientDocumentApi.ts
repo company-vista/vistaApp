@@ -9,6 +9,10 @@ export type DocumentItem = {
   _id?: string;
   companyId?: string;
   companyName?: string;
+  company?: {
+    _id?: string;
+    companyName?: string;
+  };
   documentType?: string;
   country?: string;
   fileName?: string;
@@ -24,6 +28,11 @@ export type DocumentItem = {
   downloadUrl?: string;
   deleteUrl?: string;
   canDelete?: boolean;
+};
+
+export type DocumentViewData = {
+  contentType: string;
+  viewUri: string;
 };
 
 type CompanyDocumentsResponse = {
@@ -62,6 +71,28 @@ function getResponseDocuments(data: CompanyDocumentsResponse): DocumentItem[] {
     return data.data.documents;
   }
   return [];
+}
+
+function getDocumentContentType(mimeType?: string | null, viewUrl?: string | null) {
+  if (mimeType) {
+    return mimeType;
+  }
+
+  const path = viewUrl?.split('?')[0].toLowerCase() ?? '';
+  if (path.endsWith('.jpg') || path.endsWith('.jpeg')) {
+    return 'image/jpeg';
+  }
+  if (path.endsWith('.png')) {
+    return 'image/png';
+  }
+  if (path.endsWith('.webp')) {
+    return 'image/webp';
+  }
+  if (path.endsWith('.pdf')) {
+    return 'application/pdf';
+  }
+
+  return 'application/octet-stream';
 }
 
 type FetchCompanyDocumentsParams = {
@@ -136,4 +167,57 @@ export async function fetchCompanyDocuments({
       isSuccess: false,
     };
   }
+}
+
+type FetchDocumentViewParams = {
+  mimeType?: string | null;
+  token?: string | null;
+  viewUrl?: string | null;
+};
+
+export async function fetchDocumentView({
+  mimeType,
+  token,
+  viewUrl,
+}: FetchDocumentViewParams) {
+  if (!token) {
+    console.log('Document view API skipped: auth token missing');
+
+    return {
+      data: null as DocumentViewData | null,
+      error: 'Auth token missing. Please login again.',
+      isSuccess: false,
+    };
+  }
+
+  if (!viewUrl) {
+    console.log('Document view API skipped: view url missing');
+
+    return {
+      data: null as DocumentViewData | null,
+      error: 'Document view URL missing.',
+      isSuccess: false,
+    };
+  }
+
+  const documentViewRoute = viewUrl.startsWith('http')
+    ? viewUrl
+    : `${API_BASE_URL}${viewUrl}`;
+
+  const contentType = getDocumentContentType(mimeType, viewUrl);
+
+  console.log('Document view prepared', {
+    contentType,
+    tokenLoaded: Boolean(token),
+    url: documentViewRoute,
+  });
+
+  return {
+    data: {
+      contentType,
+      viewUri: documentViewRoute,
+    },
+    error: '',
+    isSuccess: true,
+  };
 }

@@ -222,6 +222,4 @@ function SignupScreen({ onLoginPress }: SignupScreenProps) {
   );
 }
 
-
-
 export default SignupScreen;

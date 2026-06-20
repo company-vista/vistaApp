@@ -1,12 +1,12 @@
 import React from 'react';
 import {
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../../../theme/colors';
 import type { CompanyCardItem } from './quickAccess/CompanyCard';
 import BackButton from '../../../components/buttons/BackButton';
@@ -18,9 +18,10 @@ type ManageCompanyScreenProps = {
 
 const ManageCompanyScreen: React.FC<ManageCompanyScreenProps> = ({ selectedCompany, onBackPress }) => {
   const colors = useThemeColors();
+  const insets = useSafeAreaInsets();
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <StatusBar barStyle={colors.mode === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={colors.background} />
       
       {/* --- HEADER --- */}
@@ -35,7 +36,7 @@ const ManageCompanyScreen: React.FC<ManageCompanyScreenProps> = ({ selectedCompa
           <Text style={[styles.emptyText, { color: colors.muted }]}>Manage features coming soon for {selectedCompany?.name ?? 'Company'}</Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 

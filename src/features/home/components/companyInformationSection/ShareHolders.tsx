@@ -1,43 +1,33 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 import { useThemeColors, type AppTheme } from '../../../../theme/colors';
+import { useAppSelector } from '../../../../store/hooks';
+import { fetchClientCompanyDetails } from '../../api/clientProfileApi';
+import { styles } from "./ShareHoldersStyle"
+
+type ShareholderClient = {
+  _id?: string;
+  id?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phoneNumber?: string;
+  countryCode?: string;
+  role?: string;
+  isPrimary?: boolean;
+};
 
 type Shareholder = {
-  email: string;
-  id: string;
-  name: string;
-  percentage: number;
-  phone: string;
-  role: string;
-  shares: number;
+  clientId?: ShareholderClient;
+  sharePercentage?: number;
+  designation?: string;
 };
 
 type ShareHoldersProps = {
   companyId: string;
 };
-
-const mockShareholders: Shareholder[] = [
-  {
-    email: 'gautamrajexampent@gmail.com',
-    id: '1',
-    name: 'Gautam Sharma',
-    percentage: 0,
-    phone: '6254199691',
-    role: 'Shareholder',
-    shares: 0,
-  },
-  {
-    email: 'shareholder@example.com',
-    id: '2',
-    name: 'Unnamed Shareholder',
-    percentage: 0,
-    phone: '9876543210',
-    role: 'Shareholder',
-    shares: 0,
-  },
-];
 
 function getShareholderPalette(colors: AppTheme) {
   const isDark = colors.mode === 'dark';
@@ -53,11 +43,40 @@ function getShareholderPalette(colors: AppTheme) {
   };
 }
 
-const ShareHolders: React.FC<ShareHoldersProps> = ({ companyId: _companyId }) => {
+const ShareHolders: React.FC<ShareHoldersProps> = ({ companyId }) => {
   const colors = useThemeColors();
   const palette = getShareholderPalette(colors);
-  const data = mockShareholders;
-  const totalStake = data.reduce((sum, shareholder) => sum + shareholder.percentage, 0);
+
+  const token = useAppSelector(state => state.auth.token);
+  const [data, setData] = useState<Shareholder[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  console.log(data)
+  useEffect(() => {
+    let isMounted = true;
+
+    fetchClientCompanyDetails({ companyId, token }).then(result => {
+      if (!isMounted) return;
+
+      if (result.isSuccess && result.company?.shareholders) {
+        setData(result.company.shareholders);
+      }
+      setIsLoading(false);
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [companyId, token]);
+
+  const totalStake = data.reduce((sum, shareholder) => sum + (Number(shareholder.sharePercentage) || 0), 0);
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { padding: 20, alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -80,48 +99,66 @@ const ShareHolders: React.FC<ShareHoldersProps> = ({ companyId: _companyId }) =>
       </View>
 
       <View style={styles.list}>
-        {data.map(shareholder => (
-          <View
-            key={shareholder.id}
-            style={[
-              styles.shareholderCard,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-                shadowColor: palette.cardShadow,
-              },
-            ]}>
-            <Text style={[styles.name, { color: colors.text }]}>{shareholder.name}</Text>
-            <View
-              style={[
-                styles.roleBadge,
-                { backgroundColor: palette.roleBackground, borderColor: palette.roleBorder },
-              ]}>
-              <Text style={[styles.roleText, { color: palette.roleText }]}>
-                {shareholder.role}
-              </Text>
-            </View>
+        {data.length === 0 ? (
+          <Text style={{ color: colors.muted, marginTop: 10 }}>No shareholders found.</Text>
+        ) : (
+          data.map((shareholder, index) => {
+            const client = shareholder.clientId;
+            const key = client?.id || client?._id || String(index);
+            const name = `${client?.firstName || ''} ${client?.lastName || ''}`.trim() || 'Unnamed Shareholder';
+            const role = shareholder.designation || client?.role || 'Shareholder';
+            const sharePercentage = shareholder.sharePercentage || 0;
+            const email = client?.email;
+            const phone = client?.phoneNumber ? `${client?.countryCode || ''} ${client?.phoneNumber}`.trim() : null;
 
-            <InfoRow
-              icon="percent"
-              iconColor={palette.icon}
-              text={`Share Percentage: ${shareholder.percentage}%`}
-              textColor={palette.infoText}
-            />
-            <InfoRow
-              icon="envelope-o"
-              iconColor={palette.icon}
-              text={shareholder.email}
-              textColor={palette.infoText}
-            />
-            <InfoRow
-              icon="phone"
-              iconColor={palette.icon}
-              text={shareholder.phone}
-              textColor={palette.infoText}
-            />
-          </View>
-        ))}
+            return (
+              <View
+                key={key}
+                style={[
+                  styles.shareholderCard,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                    shadowColor: palette.cardShadow,
+                  },
+                ]}>
+                <Text style={[styles.name, { color: colors.text }]}>{name}</Text>
+                <View
+                  style={[
+                    styles.roleBadge,
+                    { backgroundColor: palette.roleBackground, borderColor: palette.roleBorder },
+                  ]}>
+                  <Text style={[styles.roleText, { color: palette.roleText }]}>
+                    {role}
+                  </Text>
+                </View>
+
+                <InfoRow
+                  icon="percent"
+                  iconColor={palette.icon}
+                  text={`Share Percentage: ${sharePercentage}%`}
+                  textColor={palette.infoText}
+                />
+                {email ? (
+                  <InfoRow
+                    icon="envelope-o"
+                    iconColor={palette.icon}
+                    text={email}
+                    textColor={palette.infoText}
+                  />
+                ) : null}
+                {phone ? (
+                  <InfoRow
+                    icon="phone"
+                    iconColor={palette.icon}
+                    text={phone}
+                    textColor={palette.infoText}
+                  />
+                ) : null}
+              </View>
+            );
+          })
+        )}
       </View>
     </View>
   );
@@ -146,142 +183,5 @@ function InfoRow({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    gap: 14,
-    marginBottom: 18,
-    paddingHorizontal: 6,
-  },
-  summaryCard: {
-    backgroundColor: '#0D2137',
-    borderColor: 'rgba(255,255,255,0.3)',
-    borderRadius: 16,
-    borderWidth: 1,
-    elevation: 4,
-    minHeight: 108,
-    overflow: 'hidden',
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 12,
-  },
-  summaryDeco: {
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    borderColor: 'rgba(255,255,255,0.07)',
-    borderRadius: 50,
-    borderWidth: 1,
-    bottom: -22,
-    height: 100,
-    position: 'absolute',
-    right: -18,
-    width: 100,
-  },
-  summaryDecoSmall: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 28,
-    borderWidth: 1,
-    bottom: 18,
-    height: 55,
-    justifyContent: 'center',
-    position: 'absolute',
-    right: 20,
-    width: 55,
-  },
-  summaryLabel: {
-    color: '#85B7EB',
-    fontSize: 11,
-    fontWeight: '500',
-    letterSpacing: 0.7,
-    lineHeight: 15,
-    textTransform: 'uppercase',
-  },
-  summaryValue: {
-    color: '#FFFFFF',
-    fontSize: 25,
-    fontWeight: '800',
-    lineHeight: 32,
-    marginTop: 6,
-  },
-  primaryBadge: {
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    borderColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 10,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 5,
-    marginTop: 8,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-  },
-  primaryBadgeText: {
-    color: '#85B7EB',
-    fontSize: 10,
-    fontWeight: '500',
-    lineHeight: 13,
-  },
-  sectionTitleRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 7,
-    marginTop: 2,
-  },
-  header: {
-    fontSize: 16,
-    fontWeight: '600',
-    lineHeight: 21,
-  },
-  list: {
-    gap: 12,
-  },
-  shareholderCard: {
-    borderRadius: 8,
-    borderWidth: 1,
-    elevation: 1,
-    paddingHorizontal: 15,
-    paddingVertical: 15,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-  },
-  name: {
-    fontSize: 15,
-    fontWeight: '600',
-    lineHeight: 20,
-  },
-  roleBadge: {
-    alignSelf: 'flex-start',
-    borderRadius: 7,
-    borderWidth: 1,
-    marginBottom: 14,
-    marginTop: 6,
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-  },
-  roleText: {
-    fontSize: 10,
-    fontWeight: '800',
-    lineHeight: 13,
-  },
-  infoRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    marginTop: 7,
-  },
-  infoIcon: {
-    width: 16,
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 13,
-    fontWeight: '500',
-    lineHeight: 16,
-  },
-});
 
 export default ShareHolders;

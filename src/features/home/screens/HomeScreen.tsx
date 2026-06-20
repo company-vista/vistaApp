@@ -29,8 +29,8 @@ import CompanyTabContent from '../components/CompanyTabContent';
 import CompanyDetailScreen, { type CompanyDetailSection } from '../components/CompanyDetailScreen';
 import DocumentsTabContent from './documents/DocumentsTabContent';
 import DocumentViewScreen from './documents/DocumentViewScreen';
-import ManageCompanyScreen from './ManageCompanyScreen';
 import type { DocumentItem } from '../api/clientDocumentApi';
+import ManageCompanyScreen from './ManageCompanyScreen';
 import HomeTabContent from '../components/HomeTabContent';
 import MoreTabContent from '../components/MoreTabContent';
 import ReportsTabContent from './compliances/ReportsTabContent';
@@ -88,11 +88,11 @@ function HomeScreen({
   const [searchQuery, setSearchQuery] = useState('');
   const [notificationCount, setNotificationCount] = useState(0);
   const [selectedCompany, setSelectedCompany] = useState<CompanyCardItem | null>(null);
-  const [activeCompanySection, setActiveCompanySection] = useState<CompanyDetailSection | null>(null);
-  const [selectedDocument, setSelectedDocument] = useState<DocumentItem | null>(null);
+  const [activeCompanySection, setActiveCompanySection] = useState<CompanyDetailSection | 'menu' | null>(null);
   const [isManageScreenOpen, setIsManageScreenOpen] = useState(false);
   const [companyOptions, setCompanyOptions] = useState<CompanyCardItem[]>([]);
   const [isCompanySwitcherOpen, setIsCompanySwitcherOpen] = useState(false);
+  const [selectedDocumentForView, setSelectedDocumentForView] = useState<DocumentItem | null>(null);
   const [isLoadingCompanies, setIsLoadingCompanies] = useState(false);
   const fabMenuAnim = useRef(new Animated.Value(0)).current;
   const companySwitcherAnim = useRef(new Animated.Value(0)).current;
@@ -343,19 +343,10 @@ function HomeScreen({
     closeCompanySwitcher();
   }
 
-  if (selectedDocument) {
-    return (
-      <DocumentViewScreen
-        document={selectedDocument}
-        onBackPress={() => setSelectedDocument(null)}
-      />
-    );
-  }
-
   if (activeCompanySection) {
     return (
       <CompanyDetailScreen
-        activeSection={activeCompanySection}
+        activeSection={activeCompanySection === 'menu' ? undefined : activeCompanySection}
         selectedCompany={selectedCompany}
         onBackPress={() => setActiveCompanySection(null)}
       />
@@ -367,6 +358,15 @@ function HomeScreen({
       <ManageCompanyScreen
         selectedCompany={selectedCompany}
         onBackPress={() => setIsManageScreenOpen(false)}
+      />
+    );
+  }
+
+  if (selectedDocumentForView) {
+    return (
+      <DocumentViewScreen
+        documentItem={selectedDocumentForView}
+        onBackPress={() => setSelectedDocumentForView(null)}
       />
     );
   }
@@ -437,7 +437,7 @@ function HomeScreen({
           <HomeTabContent
             isLoadingCompanies={isLoadingCompanies}
             selectedCompany={selectedCompany}
-            onCompanyInfoPress={() => setActiveTab('company')}
+            onCompanyInfoPress={() => setActiveCompanySection('menu')}
             onCompanySwitcherPress={openCompanySwitcher}
             onManagePress={() => setIsManageScreenOpen(true)}
             onQuickAccessItemPress={onQuickAccessItemPress}
@@ -461,7 +461,7 @@ function HomeScreen({
         {activeTab === 'documents' ? (
           <DocumentsTabContent
             selectedCompany={selectedCompany}
-            onDocumentViewPress={doc => setSelectedDocument(doc)}
+            onDocumentViewPress={(doc) => setSelectedDocumentForView(doc)}
           />
         ) : null}
       </ScrollView>
@@ -495,9 +495,9 @@ function HomeScreen({
               </Text>
             </Pressable>
             <Pressable style={styles.fabMenuItem}>
-              <FontAwesome name="file-text-o" size={19} color="#0f766e" />
+              <FontAwesome name="cogs" size={19} color="#0f766e" />
               <Text style={[styles.fabMenuText, { color: colors.text }]}>
-                Invoice
+                Services
               </Text>
             </Pressable>
             <Pressable style={styles.fabMenuItem}>
@@ -521,7 +521,9 @@ function HomeScreen({
         style={[
           styles.fab,
           {
-            backgroundColor: colors.activeNav,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
             bottom: safeAreaInsets.bottom + 104,
           },
         ]}>

@@ -40,6 +40,7 @@ export type ClientCompany = {
   created_at?: string;
   updatedAt?: string;
   updated_at?: string;
+  shareholders?: any[];
 };
 
 type ClientProfileResponse = {

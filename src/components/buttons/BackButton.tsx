@@ -4,7 +4,7 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { useThemeColors } from '../../theme/colors';
 
 type BackButtonProps = {
-  onPress: () => void;
+  onPress?: () => void;
 };
 
 function BackButton({ onPress }: BackButtonProps) {
