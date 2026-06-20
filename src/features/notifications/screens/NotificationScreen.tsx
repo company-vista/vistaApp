@@ -116,13 +116,14 @@ function NotificationScreen({
                   onPress={() => setActiveFilter(filter)}
                   style={[
                     styles.filterButton,
-                    isActive ? styles.activeFilterButton : null,
+                    { backgroundColor: colors.surface, borderColor: colors.border },
+                    isActive ? { borderColor: colors.accent } : null,
                   ]}>
                   <Text
                     style={[
                       styles.filterButtonText,
                       { color: colors.text },
-                      isActive ? styles.activeFilterButtonText : null,
+                      isActive ? [styles.activeFilterButtonText, { color: colors.accent }] : null,
                     ]}>
                     {filter} ({notificationFilterCounts[filter]})
                   </Text>
@@ -237,21 +238,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#e5e7eb',
     borderRadius: 10,
-    backgroundColor: '#ffffff',
     paddingHorizontal: 18,
   },
   activeFilterButton: {
-    borderColor: '#1d4fd89d',
   },
   filterButtonText: {
-    color: '#111827',
     fontSize: 13,
     fontWeight: '500',
   },
   activeFilterButtonText: {
-    color: '#2563eb',
   },
   listCard: {
     borderRadius: 18,

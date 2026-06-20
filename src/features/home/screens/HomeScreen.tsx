@@ -144,7 +144,8 @@ function HomeScreen({
 
     fetchNotifications({ token }).then(result => {
       if (isMounted && result.isSuccess) {
-        setNotificationCount(result.notifications.length);
+        const unreadCount = result.notifications.filter((n: any) => !n.isRead).length;
+        setNotificationCount(unreadCount);
       }
     });
 
@@ -419,7 +420,7 @@ function HomeScreen({
             onPress={onProfilePress}
             style={[
               styles.profileButton,
-              { backgroundColor: colors.surface, borderColor: colors.accentSoft },
+              { backgroundColor: colors.surface, borderColor: colors.accent },
             ]}>
             {profileImage ? (
               <Image
@@ -428,7 +429,7 @@ function HomeScreen({
                 style={styles.profileImage}
               />
             ) : (
-              <FontAwesome name="user" size={23} color={colors.accent} />
+              <FontAwesome name="user" size={18} color={colors.accent} />
             )}
           </Pressable>
         </View>
@@ -450,7 +451,7 @@ function HomeScreen({
             onSectionPress={setActiveCompanySection}
           />
         ) : null}
-        {activeTab === 'reports' ? <ReportsTabContent /> : null}
+        {activeTab === 'reports' ? <ReportsTabContent selectedCompany={selectedCompany} /> : null}
         {activeTab === 'billing' ? (
           <BillingTabContent
             onInvoicePress={onInvoicePress}
@@ -549,18 +550,14 @@ function HomeScreen({
           <Pressable
             key={tab.title}
             onPress={() => handleTabPress(tab.id)}
-            style={[
-              styles.navItem,
-              activeTab === tab.id || (tab.id === 'more' && isMoreOpen)
-                ? { backgroundColor: colors.activeNav }
-                : null,
-            ]}>
+            style={styles.navItem}>
             <FontAwesome
               name={tab.icon}
               size={22}
+              style={{ width: 24, textAlign: 'center' }}
               color={
                 activeTab === tab.id || (tab.id === 'more' && isMoreOpen)
-                  ? colors.text
+                  ? colors.accent
                   : colors.muted
               }
             />
@@ -569,10 +566,8 @@ function HomeScreen({
               adjustsFontSizeToFit
               style={[
                 styles.navText,
-                { color: colors.muted },
-                activeTab === tab.id || (tab.id === 'more' && isMoreOpen)
-                  ? [styles.activeNavText, { color: colors.text }]
-                  : null,
+                { color: activeTab === tab.id || (tab.id === 'more' && isMoreOpen) ? colors.accent : colors.muted },
+                activeTab === tab.id || (tab.id === 'more' && isMoreOpen) ? styles.activeNavText : null,
               ]}>
               {tab.title}
             </Text>
