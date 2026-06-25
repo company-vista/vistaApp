@@ -28,6 +28,7 @@ type NotificationsResponse = {
 
 type FetchNotificationsParams = {
   token?: string | null;
+  companyId?: string | null;
 };
 
 function asNotificationArray(value: unknown): NotificationApiItem[] {
@@ -89,14 +90,16 @@ function normalizeNotification(item: NotificationApiItem, index: number): Notifi
   };
 }
 
-export async function fetchNotifications({ token }: FetchNotificationsParams = {}) {
+export async function fetchNotifications({ token, companyId }: FetchNotificationsParams = {}) {
+  const route = companyId ? `${NOTIFICATIONS_ROUTE}/company/${companyId}` : NOTIFICATIONS_ROUTE;
+
   try {
-    const response = await axios.get<NotificationsResponse>(NOTIFICATIONS_ROUTE, {
+    const response = await axios.get<NotificationsResponse>(route, {
       headers: token
         ? {
-            Authorization: `Bearer ${token}`,
-            'x-auth-token': token,
-          }
+          Authorization: `Bearer ${token}`,
+          'x-auth-token': token,
+        }
         : undefined,
       timeout: API_REQUEST_TIMEOUT_MS,
     });
@@ -113,7 +116,7 @@ export async function fetchNotifications({ token }: FetchNotificationsParams = {
       message: axiosError.message,
       response: axiosError.response?.data,
       status: axiosError.response?.status,
-      url: NOTIFICATIONS_ROUTE,
+      url: route,
     });
 
     return {

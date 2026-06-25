@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -25,11 +26,13 @@ function getBadgeCount(count: number) {
 }
 
 type NotificationScreenProps = {
+  companyId?: string | null;
   onBackPress: () => void;
   onNotificationPress: (notification: NotificationItem) => void;
 };
 
 function NotificationScreen({
+  companyId,
   onBackPress,
   onNotificationPress,
 }: NotificationScreenProps) {
@@ -39,6 +42,8 @@ function NotificationScreen({
   const [activeFilter, setActiveFilter] = useState<NotificationFilter>('All');
   const [notificationList, setNotificationList] = useState<NotificationItem[]>([]);
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(true);
+  const [selectedNotification, setSelectedNotification] = useState<NotificationItem | null>(null);
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const hasNotifications = notificationList.length > 0;
   const filteredNotifications = useMemo(() => {
     if (activeFilter === 'Unread') {
@@ -65,7 +70,7 @@ function NotificationScreen({
 
     setIsLoadingNotifications(true);
 
-    fetchNotifications({ token }).then(result => {
+    fetchNotifications({ token, companyId }).then(result => {
       if (isMounted && result.isSuccess) {
         setNotificationList(result.notifications);
       }
@@ -78,117 +83,184 @@ function NotificationScreen({
     return () => {
       isMounted = false;
     };
-  }, [token]);
+  }, [token, companyId]);
 
   return (
-    <ScrollView
-      contentContainerStyle={[
-        styles.scrollContent,
-        { paddingBottom: safeAreaInsets.bottom + 24 },
-      ]}
-      style={[
-        styles.screen,
-        { backgroundColor: colors.background, paddingTop: safeAreaInsets.top + 22 },
-      ]}>
-      <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <BackButton onPress={onBackPress} />
-          <Text style={[styles.title, { color: colors.text }]}>Notifications</Text>
+    <>
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: safeAreaInsets.bottom + 24 },
+        ]}
+        style={[
+          styles.screen,
+          { backgroundColor: colors.background, paddingTop: safeAreaInsets.top + 22 },
+        ]}>
+        <View style={styles.header}>
+          <View style={styles.titleRow}>
+            <BackButton onPress={onBackPress} />
+            <Text style={[styles.title, { color: colors.text }]}>Notifications</Text>
+          </View>
+          {hasNotifications ? (
+            <View style={styles.countBadge}>
+              <Text style={styles.countText}>{getBadgeCount(notificationList.length)}</Text>
+            </View>
+          ) : null}
         </View>
-        {hasNotifications ? (
-          <View style={styles.countBadge}>
-            <Text style={styles.countText}>{getBadgeCount(notificationList.length)}</Text>
-          </View>
-        ) : null}
-      </View>
 
-      {isLoadingNotifications ? (
-        <NotificationPageSkeleton />
-      ) : hasNotifications ? (
-        <>
-          <View style={styles.filterRow}>
-            {notificationFilters.map(filter => {
-              const isActive = activeFilter === filter;
+        {isLoadingNotifications ? (
+          <NotificationPageSkeleton />
+        ) : hasNotifications ? (
+          <>
+            <View style={styles.filterRow}>
+              {notificationFilters.map(filter => {
+                const isActive = activeFilter === filter;
 
-              return (
-                <Pressable
-                  key={filter}
-                  onPress={() => setActiveFilter(filter)}
-                  style={[
-                    styles.filterButton,
-                    { backgroundColor: colors.surface, borderColor: colors.border },
-                    isActive ? { borderColor: colors.accent } : null,
-                  ]}>
-                  <Text
+                return (
+                  <Pressable
+                    key={filter}
+                    onPress={() => setActiveFilter(filter)}
                     style={[
-                      styles.filterButtonText,
-                      { color: colors.text },
-                      isActive ? [styles.activeFilterButtonText, { color: colors.accent }] : null,
+                      styles.filterButton,
+                      { backgroundColor: colors.surface, borderColor: colors.border },
+                      isActive ? { borderColor: colors.accent } : null,
                     ]}>
-                    {filter} ({notificationFilterCounts[filter]})
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+                    <Text
+                      style={[
+                        styles.filterButtonText,
+                        { color: colors.text },
+                        isActive ? [styles.activeFilterButtonText, { color: colors.accent }] : null,
+                      ]}>
+                      {filter} ({notificationFilterCounts[filter]})
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
 
-          {filteredNotifications.length > 0 ? (
-            <View style={[styles.listCard, { backgroundColor: colors.surface }]}>
-              {filteredNotifications.map(item => (
-                <Pressable
-                  key={item.id}
-                  onPress={() => onNotificationPress(item)}
-                  style={[styles.notificationRow, { borderBottomColor: colors.border }]}>
-                  <View
-                    style={[
-                      styles.notificationIcon,
-                      { backgroundColor: colors.surfaceAlt },
-                    ]}>
-                    <FontAwesome name={item.icon} size={18} color={colors.accent} />
-                  </View>
-                  <View style={styles.notificationCopy}>
-                    <View style={styles.notificationTitleRow}>
-                      <Text style={[styles.notificationTitle, { color: colors.text }]}>
-                        {item.title}
-                      </Text>
-                      {!item.isRead ? <View style={styles.unreadDot} /> : null}
+            {filteredNotifications.length > 0 ? (
+              <View style={[styles.listCard, { backgroundColor: colors.surface }]}>
+                {filteredNotifications.map(item => (
+                  <Pressable
+                    key={item.id}
+                    onPress={() => {
+                      if (!item.isRead) {
+                        setNotificationList(prev =>
+                          prev.map(notification =>
+                            notification.id === item.id
+                              ? { ...notification, isRead: true }
+                              : notification,
+                          ),
+                        );
+                      }
+                      onNotificationPress(item);
+                    }}
+                    onLongPress={() => {
+                      setSelectedNotification(item);
+                      setIsDeleteModalVisible(true);
+                    }}
+                    delayLongPress={500}
+                    style={[styles.notificationRow, { borderBottomColor: colors.border }]}>
+                    <View
+                      style={[
+                        styles.notificationIcon,
+                        { backgroundColor: colors.surfaceAlt },
+                      ]}>
+                      <FontAwesome name={item.icon} size={18} color={colors.accent} />
                     </View>
-                    <Text style={[styles.notificationMessage, { color: colors.muted }]}>
-                      {item.message}
-                    </Text>
-                    <Text style={[styles.notificationTime, { color: colors.subtle }]}>
-                      {item.time}
-                    </Text>
-                  </View>
-                </Pressable>
-              ))}
-            </View>
-          ) : (
-            <View style={[styles.emptyCard, { backgroundColor: colors.surface }]}>
-              <View style={[styles.emptyIcon, { backgroundColor: colors.surfaceAlt }]}>
-                <FontAwesome name="bell-o" size={30} color={colors.accent} />
+                    <View style={styles.notificationCopy}>
+                      <View style={styles.notificationTitleRow}>
+                        <Text style={[styles.notificationTitle, { color: colors.text }]}>
+                          {item.title}
+                        </Text>
+                        {!item.isRead ? <View style={styles.unreadDot} /> : null}
+                      </View>
+                      <Text style={[styles.notificationMessage, { color: colors.muted }]}>
+                        {item.message}
+                      </Text>
+                      <Text style={[styles.notificationTime, { color: colors.subtle }]}>
+                        {item.time}
+                      </Text>
+                    </View>
+                  </Pressable>
+                ))}
               </View>
-              <Text style={[styles.emptyTitle, { color: colors.text }]}>
-                No {activeFilter.toLowerCase()} notifications
-              </Text>
-              <Text style={[styles.emptyText, { color: colors.muted }]}>
-                Matching notifications will appear here.
-              </Text>
+            ) : (
+              <View style={[styles.emptyCard, { backgroundColor: colors.surface }]}>
+                <View style={[styles.emptyIcon, { backgroundColor: colors.surfaceAlt }]}>
+                  <FontAwesome name="bell-o" size={30} color={colors.accent} />
+                </View>
+                <Text style={[styles.emptyTitle, { color: colors.text }]}>
+                  No {activeFilter.toLowerCase()} notifications
+                </Text>
+                <Text style={[styles.emptyText, { color: colors.muted }]}>
+                  Matching notifications will appear here.
+                </Text>
+              </View>
+            )}
+          </>
+        ) : (
+          <View style={[styles.emptyCard, { backgroundColor: colors.surface }]}>
+            <View style={[styles.emptyIcon, { backgroundColor: colors.surfaceAlt }]}>
+              <FontAwesome name="bell-o" size={30} color={colors.accent} />
             </View>
-          )}
-        </>
-      ) : (
-        <View style={[styles.emptyCard, { backgroundColor: colors.surface }]}>
-          <View style={[styles.emptyIcon, { backgroundColor: colors.surfaceAlt }]}>
-            <FontAwesome name="bell-o" size={30} color={colors.accent} />
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>No notifications</Text>
+            <Text style={[styles.emptyText, { color: colors.muted }]}>
+              You are all caught up. New updates will appear here.
+            </Text>
           </View>
-          <Text style={[styles.emptyTitle, { color: colors.text }]}>No notifications</Text>
-          <Text style={[styles.emptyText, { color: colors.muted }]}>
-            You are all caught up. New updates will appear here.
-          </Text>
+        )}
+      </ScrollView>
+
+      <Modal
+        animationType="fade"
+        transparent
+        visible={isDeleteModalVisible}
+        onRequestClose={() => setIsDeleteModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalCard, { backgroundColor: colors.surface }]}>
+            <View style={styles.iconCircleOuter}>
+              <View style={styles.iconCircleInner}>
+                <FontAwesome name="trash" size={24} color="#ffffff" />
+              </View>
+            </View>
+
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              Are you sure you want to delete ?
+            </Text>
+
+            <Text style={[styles.modalSubtitle, { color: colors.muted }]}>
+              Deleting this will result to permanent removal. You can archive instead
+            </Text>
+
+            <View style={styles.modalActions}>
+              <Pressable
+                onPress={() => {
+                  if (selectedNotification) {
+                    setNotificationList(prev =>
+                      prev.filter(n => n.id !== selectedNotification.id),
+                    );
+                  }
+                  setIsDeleteModalVisible(false);
+                  setSelectedNotification(null);
+                }}
+                style={styles.deleteButton}>
+                <Text style={styles.deleteButtonText}>Delete</Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => {
+                  setIsDeleteModalVisible(false);
+                  setSelectedNotification(null);
+                }}
+                style={[styles.cancelButton, { borderColor: colors.accent }]}>
+                <Text style={[styles.cancelButtonText, { color: colors.accent }]}>Cancel</Text>
+              </Pressable>
+            </View>
+          </View>
         </View>
-      )}
-    </ScrollView>
+      </Modal>
+    </>
   );
 }
 
@@ -332,6 +404,79 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     marginTop: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.42)',
+    paddingHorizontal: 24,
+  },
+  modalCard: {
+    width: '100%',
+    borderRadius: 28,
+    padding: 20,
+    alignItems: 'center',
+  },
+  iconCircleOuter: {
+    width: 62,
+    height: 62,
+    borderRadius: 36,
+    backgroundColor: '#fee2e2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  iconCircleInner: {
+    width: 44,
+    height: 44,
+    borderRadius: 24,
+    backgroundColor: '#ef4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  modalSubtitle: {
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+    paddingHorizontal: 12,
+  },
+  modalActions: {
+    width: '100%',
+    gap: 11,
+  },
+  deleteButton: {
+    width: '100%',
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#ef4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  deleteButtonText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  cancelButton: {
+    width: '100%',
+    height: 46,
+    borderRadius: 24,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

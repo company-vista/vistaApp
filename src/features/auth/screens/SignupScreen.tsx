@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import Toast from 'react-native-toast-message';
 import styles from './SignupScreen.styles';
 
 import logoImage from '../../../assets/images/logoR.png';
@@ -131,6 +132,18 @@ function SignupScreen({ onLoginPress }: SignupScreenProps) {
                 style={[styles.input, { color: colors.inputText }]}
                 value={email}
               />
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => {
+                  Toast.show({
+                    type: 'success',
+                    text1: 'Email verified',
+                    text2: 'Your email has been verified successfully.',
+                  });
+                }}
+                style={styles.verifyButton}>
+                <Text style={[styles.verifyLabel, { color: colors.text }]}>Verify</Text>
+              </Pressable>
             </View>
             {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
           </View>

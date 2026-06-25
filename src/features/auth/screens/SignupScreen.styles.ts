@@ -55,10 +55,28 @@ const styles = StyleSheet.create({
   field: {
     gap: 8,
   },
+  fieldLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   label: {
     color: '#cbd5e1a9',
     fontSize: 14,
     fontWeight: '700',
+  },
+  verifyButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+    backgroundColor: '#187269',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  verifyLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#f59e0b',
   },
   inputWrap: {
     height: 52,

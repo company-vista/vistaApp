@@ -180,7 +180,7 @@ function TabPlaceholder({
     ]
   });
 
-  // Stats Counters का लॉजिक नए स्टेटस के हिसाब से अपडेट किया
+  // Stats Counters 
   const overdueCount = derivedActions.filter(a => a.status === 'Expired').length;
   const pendingCount = derivedActions.filter(a => a.status === 'Pending').length;
   const doneCount = derivedActions.filter(a => a.status === 'Active' || a.status === 'Completed' || a.status === 'Client Managed').length;

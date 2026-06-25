@@ -6,6 +6,7 @@ import type { CompanyCardItem } from '../screens/quickAccess/CompanyCard';
 import ComplianceStatusSection from '../screens/compliances/ComplianceStatusSection';
 import HomeHeroSection from './home/HomeHeroSection';
 import OrderServicesSection from './home/OrderServicesSection';
+import RecentActivityAndPaymentOverviewSection from './home/RecentActivityAndPaymentOverviewSection';
 import UpcomingDeadlinesSection from './home/UpcomingDeadlinesSection';
 
 type HomeTabContentProps = {
@@ -15,6 +16,7 @@ type HomeTabContentProps = {
   onManagePress: () => void;
   onQuickAccessItemPress: (itemId: QuickAccessItemId) => void;
   onQuickAccessViewAllPress: () => void;
+  onTransactionsPress?: () => void;
   selectedCompany?: CompanyCardItem | null;
 };
 
@@ -25,6 +27,7 @@ function HomeTabContent({
   onManagePress,
   onQuickAccessItemPress,
   onQuickAccessViewAllPress,
+  onTransactionsPress,
   selectedCompany,
 }: HomeTabContentProps) {
   return (
@@ -55,6 +58,10 @@ function HomeTabContent({
       />
 
       <OrderServicesSection onQuickAccessItemPress={onQuickAccessItemPress} />
+      <RecentActivityAndPaymentOverviewSection
+        onPress={onTransactionsPress}
+        selectedCompany={selectedCompany}
+      />
       <UpcomingDeadlinesSection />
     </View>
   );

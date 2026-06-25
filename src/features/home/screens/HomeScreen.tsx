@@ -2,20 +2,24 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
-  Image,
   Pressable,
   ScrollView,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import styles from './HomeScreen.styles';
 
-import logoImage from '../../../assets/images/logo.jpg';
 import { useAppSelector } from '../../../store/hooks';
 import { useThemeColors } from '../../../theme/colors';
+
+// Import subcomponents
+import { HomeHeader } from './homeScreenComponent/HomeHeader';
+import { BottomNavBar, type TabId } from './homeScreenComponent/BottomNavBar';
+import { QuickActionFab } from './homeScreenComponent/QuickActionFab';
+import { CompanySwitcherModal } from './homeScreenComponent/CompanySwitcherModal';
+import { SearchModal } from './homeScreenComponent/SearchModal';
 import { fetchNotifications } from '../../notifications/api/notificationsApi';
 import type { CompanyCardItem } from './quickAccess/CompanyCard';
 import {
@@ -31,25 +35,13 @@ import DocumentsTabContent from './documents/DocumentsTabContent';
 import DocumentViewScreen from './documents/DocumentViewScreen';
 import type { DocumentItem } from '../api/clientDocumentApi';
 import ManageCompanyScreen from './ManageCompanyScreen';
+import TransactionsScreen from './TransactionsScreen';
 import HomeTabContent from '../components/HomeTabContent';
 import MoreTabContent from '../components/MoreTabContent';
 import ReportsTabContent from './compliances/ReportsTabContent';
 import type { QuickAccessItemId } from '../data/quickAccessItems';
 
-type TabId = 'home' | 'company' | 'reports' | 'billing' | 'documents' | 'more';
-
-const tabs: Array<{ id: TabId; title: string; icon: string }> = [
-  { id: 'home', title: 'Home', icon: 'home' },
-  { id: 'reports', title: 'Compliances', icon: 'check-square-o' },
-  { id: 'billing', title: 'Invoices', icon: 'file-text-o' },
-  { id: 'documents', title: 'Documents', icon: 'folder-o' },
-  { id: 'more', title: 'More', icon: 'ellipsis-h' },
-];
 const emptyCompanies: ClientCompany[] = [];
-
-function getBadgeCount(count: number) {
-  return count > 9 ? '9+' : String(count);
-}
 
 type HomeScreenProps = {
   initialTab?: TabId;
@@ -61,6 +53,7 @@ type HomeScreenProps = {
   onProfilePress: () => void;
   onQuickAccessItemPress: (itemId: QuickAccessItemId) => void;
   onQuickAccessViewAllPress: () => void;
+  onCompanyChange?: (companyId: string | null) => void;
 };
 
 function HomeScreen({
@@ -73,6 +66,7 @@ function HomeScreen({
   onProfilePress,
   onQuickAccessItemPress,
   onQuickAccessViewAllPress,
+  onCompanyChange,
 }: HomeScreenProps) {
   const safeAreaInsets = useSafeAreaInsets();
   const colors = useThemeColors();
@@ -90,6 +84,7 @@ function HomeScreen({
   const [selectedCompany, setSelectedCompany] = useState<CompanyCardItem | null>(null);
   const [activeCompanySection, setActiveCompanySection] = useState<CompanyDetailSection | 'menu' | null>(null);
   const [isManageScreenOpen, setIsManageScreenOpen] = useState(false);
+  const [isTransactionsOpen, setIsTransactionsOpen] = useState(false);
   const [companyOptions, setCompanyOptions] = useState<CompanyCardItem[]>([]);
   const [isCompanySwitcherOpen, setIsCompanySwitcherOpen] = useState(false);
   const [selectedDocumentForView, setSelectedDocumentForView] = useState<DocumentItem | null>(null);
@@ -99,6 +94,9 @@ function HomeScreen({
   const moreSlideAnim = useRef(new Animated.Value(320)).current;
   const bellAnim = useRef(new Animated.Value(0)).current;
   const fabMenuOpacity = fabMenuAnim;
+  useEffect(() => {
+    onCompanyChange?.(selectedCompany?.id ?? null);
+  }, [selectedCompany, onCompanyChange]);
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
@@ -142,17 +140,16 @@ function HomeScreen({
   useEffect(() => {
     let isMounted = true;
 
-    fetchNotifications({ token }).then(result => {
+    fetchNotifications({ token, companyId: selectedCompany?.id }).then(result => {
       if (isMounted && result.isSuccess) {
-        const unreadCount = result.notifications.filter((n: any) => !n.isRead).length;
-        setNotificationCount(unreadCount);
+        setNotificationCount(result.notifications.length);
       }
     });
 
     return () => {
       isMounted = false;
     };
-  }, [token]);
+  }, [token, selectedCompany?.id]);
 
   useEffect(() => {
     let isMounted = true;
@@ -339,6 +336,15 @@ function HomeScreen({
     });
   }
 
+  function openTransactionsScreen() {
+    closeFabMenu();
+    setIsTransactionsOpen(true);
+  }
+
+  function closeTransactionsScreen() {
+    setIsTransactionsOpen(false);
+  }
+
   function selectCompanyFromSwitcher(company: CompanyCardItem) {
     setSelectedCompany(company);
     closeCompanySwitcher();
@@ -372,6 +378,12 @@ function HomeScreen({
     );
   }
 
+  if (isTransactionsOpen) {
+    return (
+      <TransactionsScreen onBackPress={closeTransactionsScreen} selectedCompany={selectedCompany} />
+    );
+  }
+
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <ScrollView
@@ -383,56 +395,20 @@ function HomeScreen({
           },
         ]}
         showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Image
-            onError={event => console.log('Header avatar failed', event.nativeEvent.error, profileImage)}
-            source={logoImage}
-            style={styles.avatar}
-          />
-          <Text numberOfLines={1} style={[styles.greeting, { color: colors.text }]}>
-            Hi, {displayName || 'User'}
-          </Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Open search"
-            onPress={() => {
-              closeFabMenu();
-              setIsSearchOpen(true);
-            }}
-            style={styles.headerIcon}>
-            <FontAwesome name="search" size={22} color={colors.muted} />
-          </Pressable>
-          <Pressable
-            onPress={onNotificationPress}
-            style={[styles.headerIcon, styles.notificationButton]}>
-            <Animated.View style={{ transform: [{ rotate: bellRotation }] }}>
-              <FontAwesome name="bell-o" size={21} color={colors.text} />
-            </Animated.View>
-            {notificationCount > 0 ? (
-              <View style={styles.notificationBadge}>
-                <Text style={styles.notificationBadgeText}>
-                  {getBadgeCount(notificationCount)}
-                </Text>
-              </View>
-            ) : null}
-          </Pressable>
-          <Pressable
-            onPress={onProfilePress}
-            style={[
-              styles.profileButton,
-              { backgroundColor: colors.surface, borderColor: colors.accent },
-            ]}>
-            {profileImage ? (
-              <Image
-                onError={event => console.log('Profile button avatar failed', event.nativeEvent.error, profileImage)}
-                source={{ uri: profileImage }}
-                style={styles.profileImage}
-              />
-            ) : (
-              <FontAwesome name="user" size={18} color={colors.accent} />
-            )}
-          </Pressable>
-        </View>
+
+        <HomeHeader
+          displayName={displayName}
+          profileImage={profileImage}
+          notificationCount={notificationCount}
+          bellRotation={bellRotation}
+          onSearchPress={() => {
+            closeFabMenu();
+            setIsSearchOpen(true);
+          }}
+          onNotificationPress={onNotificationPress}
+          onProfilePress={onProfilePress}
+          colors={colors}
+        />
 
         {activeTab === 'home' ? (
           <HomeTabContent
@@ -443,6 +419,7 @@ function HomeScreen({
             onManagePress={() => setIsManageScreenOpen(true)}
             onQuickAccessItemPress={onQuickAccessItemPress}
             onQuickAccessViewAllPress={onQuickAccessViewAllPress}
+            onTransactionsPress={openTransactionsScreen}
           />
         ) : null}
         {activeTab === 'company' ? (
@@ -467,113 +444,26 @@ function HomeScreen({
         ) : null}
       </ScrollView>
 
-      {isFabMenuOpen ? (
-        <>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Close quick actions"
-            onPress={closeFabMenu}
-            style={styles.fabMenuBackdrop}
-          />
-          <Animated.View
-            style={[
-              styles.fabMenu,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-                bottom: safeAreaInsets.bottom + 168,
-                opacity: fabMenuOpacity,
-                transform: [
-                  { translateY: fabMenuTranslateY },
-                  { scale: fabMenuScale },
-                ],
-              },
-            ]}>
-            <Pressable style={styles.fabMenuItem}>
-              <FontAwesome name="building-o" size={19} color="#2563eb" />
-              <Text style={[styles.fabMenuText, { color: colors.text }]}>
-                Company
-              </Text>
-            </Pressable>
-            <Pressable style={styles.fabMenuItem}>
-              <FontAwesome name="cogs" size={19} color="#0f766e" />
-              <Text style={[styles.fabMenuText, { color: colors.text }]}>
-                Services
-              </Text>
-            </Pressable>
-            <Pressable style={styles.fabMenuItem}>
-              <FontAwesome name="credit-card" size={19} color="#f59e0b" />
-              <Text style={[styles.fabMenuText, { color: colors.text }]}>
-                Payment
-              </Text>
-            </Pressable>
-            <Pressable style={styles.fabMenuItem}>
-              <FontAwesome name="comments-o" size={19} color="#7c3aed" />
-              <Text style={[styles.fabMenuText, { color: colors.text }]}>
-                Support
-              </Text>
-            </Pressable>
-          </Animated.View>
-        </>
-      ) : null}
+      <QuickActionFab
+        isFabMenuOpen={isFabMenuOpen}
+        fabMenuOpacity={fabMenuOpacity}
+        fabMenuScale={fabMenuScale}
+        fabMenuTranslateY={fabMenuTranslateY}
+        fabIconRotate={fabIconRotate}
+        onToggleMenu={toggleFabMenu}
+        onCloseMenu={closeFabMenu}
+        colors={colors}
+        safeAreaInsets={safeAreaInsets}
+        onTransactionsPress={openTransactionsScreen}
+      />
 
-      <Pressable
-        onPress={toggleFabMenu}
-        style={[
-          styles.fab,
-          {
-            backgroundColor: colors.surface,
-            borderWidth: 1,
-            borderColor: colors.border,
-            bottom: safeAreaInsets.bottom + 104,
-          },
-        ]}>
-        <Animated.View style={{ transform: [{ rotate: fabIconRotate }] }}>
-          <FontAwesome
-            name="plus"
-            size={24}
-            color={colors.text}
-            style={styles.fabIcon}
-          />
-        </Animated.View>
-      </Pressable>
-
-      <View
-        style={[
-          styles.bottomNav,
-          {
-            backgroundColor: colors.surface,
-            paddingBottom: safeAreaInsets.bottom + 10,
-          },
-        ]}>
-        {tabs.map(tab => (
-          <Pressable
-            key={tab.title}
-            onPress={() => handleTabPress(tab.id)}
-            style={styles.navItem}>
-            <FontAwesome
-              name={tab.icon}
-              size={22}
-              style={{ width: 24, textAlign: 'center' }}
-              color={
-                activeTab === tab.id || (tab.id === 'more' && isMoreOpen)
-                  ? colors.accent
-                  : colors.muted
-              }
-            />
-            <Text
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              style={[
-                styles.navText,
-                { color: activeTab === tab.id || (tab.id === 'more' && isMoreOpen) ? colors.accent : colors.muted },
-                activeTab === tab.id || (tab.id === 'more' && isMoreOpen) ? styles.activeNavText : null,
-              ]}>
-              {tab.title}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+      <BottomNavBar
+        activeTab={activeTab}
+        isMoreOpen={isMoreOpen}
+        onTabPress={handleTabPress}
+        colors={colors}
+        safeAreaInsets={safeAreaInsets}
+      />
 
       {isMoreOpen ? (
         <View style={styles.moreOverlay}>
@@ -607,166 +497,27 @@ function HomeScreen({
         </View>
       ) : null}
 
-      {isSearchOpen ? (
-        <View style={styles.searchOverlay}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Close search"
-            onPress={closeSearch}
-            style={[styles.searchBackdrop, { backgroundColor: colors.backdrop }]}
-          />
-          <View
-            style={[
-              styles.searchPopup,
-              {
-                backgroundColor: colors.sheet,
-                borderColor: colors.border,
-                marginTop: safeAreaInsets.top + 18,
-              },
-            ]}>
-            <View style={styles.searchHeader}>
-              <Text style={[styles.searchTitle, { color: colors.text }]}>Search</Text>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Close search"
-                onPress={closeSearch}
-                style={[styles.searchCloseButton, { backgroundColor: colors.surface }]}>
-                <FontAwesome name="close" size={18} color={colors.text} />
-              </Pressable>
-            </View>
+      <SearchModal
+        isOpen={isSearchOpen}
+        searchQuery={searchQuery}
+        onSearchQueryChange={setSearchQuery}
+        onClose={closeSearch}
+        colors={colors}
+        safeAreaInsets={safeAreaInsets}
+      />
 
-            <View
-              style={[
-                styles.searchInputWrap,
-                { backgroundColor: colors.surface, borderColor: colors.border },
-              ]}>
-              <FontAwesome name="search" size={18} color={colors.muted} />
-              <TextInput
-                autoFocus
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                placeholder="Search services, invoices, reports..."
-                placeholderTextColor={colors.muted}
-                returnKeyType="search"
-                style={[styles.searchInput, { color: colors.text }]}
-              />
-              {searchQuery.length > 0 ? (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Clear search"
-                  onPress={() => setSearchQuery('')}
-                  style={styles.clearSearchButton}>
-                  <FontAwesome name="times-circle" size={18} color={colors.muted} />
-                </Pressable>
-              ) : null}
-            </View>
-
-            <Text style={[styles.searchHint, { color: colors.muted }]}>
-              {searchQuery.trim().length > 0
-                ? `Searching for "${searchQuery.trim()}"`
-                : 'Type to find company services, invoices, reports, and support.'}
-            </Text>
-          </View>
-        </View>
-      ) : null}
-
-      {isCompanySwitcherOpen ? (
-        <View style={styles.companySwitcherOverlay}>
-          <Pressable
-            onPress={closeCompanySwitcher}
-            style={[styles.companySwitcherBackdrop, { backgroundColor: colors.backdrop }]}
-          />
-          <Animated.View
-            style={[
-              styles.companySwitcherDropdown,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-                opacity: companySwitcherOpacity,
-                top: safeAreaInsets.top + 236,
-                transform: [{ translateY: companySwitcherTranslateY }],
-              },
-            ]}>
-            <View style={styles.companySwitcherHeader}>
-              <View>
-                <Text style={[styles.companySwitcherTitle, { color: colors.text }]}>
-                  Switch company
-                </Text>
-                <Text style={[styles.companySwitcherSubtitle, { color: colors.muted }]}>
-                  Select company context for the dashboard
-                </Text>
-              </View>
-              <Pressable
-                onPress={closeCompanySwitcher}
-                style={[styles.sheetCloseButton, { backgroundColor: colors.surface }]}>
-                <FontAwesome name="close" size={18} color={colors.text} />
-              </Pressable>
-            </View>
-
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.companySwitcherList}>
-              {isLoadingCompanies ? (
-                <Text style={[styles.companySwitcherEmptyText, { color: colors.muted }]}>
-                  Loading companies...
-                </Text>
-              ) : null}
-              {!isLoadingCompanies && companyOptions.length === 0 ? (
-                <Text style={[styles.companySwitcherEmptyText, { color: colors.muted }]}>
-                  No companies available.
-                </Text>
-              ) : null}
-              {!isLoadingCompanies && companyOptions.map(company => {
-                const isSelected = selectedCompany?.id === company.id;
-
-                return (
-                  <Pressable
-                    key={company.id}
-                    onPress={() => selectCompanyFromSwitcher(company)}
-                    style={[
-                      styles.companySwitcherRow,
-                      {
-                        backgroundColor: colors.surface,
-                        borderColor: isSelected ? colors.accentSoft : colors.border,
-                      },
-                    ]}>
-                    <View
-                      style={[
-                        styles.companySwitcherAvatar,
-                        { backgroundColor: company.avatarColor },
-                      ]}>
-                      <Text
-                        style={[
-                          styles.companySwitcherAvatarText,
-                          { color: company.initialsColor },
-                        ]}>
-                        {company.initials}
-                      </Text>
-                    </View>
-                    <View style={styles.companySwitcherCopy}>
-                      <Text
-                        numberOfLines={1}
-                        style={[styles.companySwitcherName, { color: colors.text }]}>
-                        {company.name}
-                      </Text>
-                      <Text
-                        numberOfLines={1}
-                        style={[styles.companySwitcherMeta, { color: colors.muted }]}>
-                        {company.companyType} - EIN {company.ein}
-                      </Text>
-                    </View>
-                    {isSelected ? (
-                      <FontAwesome name="check-circle" size={20} color={colors.accent} />
-                    ) : (
-                      <FontAwesome name="angle-right" size={20} color={colors.muted} />
-                    )}
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          </Animated.View>
-        </View>
-      ) : null}
+      <CompanySwitcherModal
+        isOpen={isCompanySwitcherOpen}
+        isLoading={isLoadingCompanies}
+        companyOptions={companyOptions}
+        selectedCompany={selectedCompany}
+        companySwitcherOpacity={companySwitcherOpacity}
+        companySwitcherTranslateY={companySwitcherTranslateY}
+        onSelectCompany={selectCompanyFromSwitcher}
+        onClose={closeCompanySwitcher}
+        colors={colors}
+        safeAreaInsets={safeAreaInsets}
+      />
     </View>
   );
 }

@@ -281,7 +281,7 @@ export async function handleLoginApi({
 
     if (!token) {
       console.log('Client login response missing token', {
-        data: response.data,
+        data: response?.data,
         dataKeys: isApiRecord(response.data) ? Object.keys(response.data) : [],
         headerKeys: Object.keys(response.headers),
       });

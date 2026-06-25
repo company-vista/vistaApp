@@ -48,25 +48,51 @@ const complianceItems = [
 
 type Tone = (typeof complianceItems)[number]['tone'];
 
-function getToneStyles(tone: Tone) {
+function getToneStyles(tone: Tone, colors: ReturnType<typeof useThemeColors>) {
+  const isDark = colors.mode === 'dark';
+
   const toneStyles = {
     amber: {
-      icon: styles.iconAmber,
-      iconText: styles.iconTextAmber,
-      tag: styles.tagAmber,
-      tagText: styles.tagTextAmber,
+      icon: {
+        backgroundColor: isDark ? '#2F2411' : '#FEF3C7',
+      },
+      iconText: {
+        color: isDark ? '#F9C56A' : '#B45309',
+      },
+      tag: {
+        backgroundColor: isDark ? '#3A2A15' : '#FEF3C7',
+      },
+      tagText: {
+        color: isDark ? '#F7DCA7' : '#B45309',
+      },
     },
     green: {
-      icon: styles.iconGreen,
-      iconText: styles.iconTextGreen,
-      tag: styles.tagGreen,
-      tagText: styles.tagTextGreen,
+      icon: {
+        backgroundColor: isDark ? '#15352A' : '#D1FAE5',
+      },
+      iconText: {
+        color: isDark ? '#7DD3A8' : '#047857',
+      },
+      tag: {
+        backgroundColor: isDark ? '#1C4334' : '#D1FAE5',
+      },
+      tagText: {
+        color: isDark ? '#A7F3D0' : '#047857',
+      },
     },
     red: {
-      icon: styles.iconRed,
-      iconText: styles.iconTextRed,
-      tag: styles.tagRed,
-      tagText: styles.tagTextRed,
+      icon: {
+        backgroundColor: isDark ? '#3D1717' : '#FEE2E2',
+      },
+      iconText: {
+        color: isDark ? '#F8A5A5' : '#DC2626',
+      },
+      tag: {
+        backgroundColor: isDark ? '#4C1D1D' : '#FEE2E2',
+      },
+      tagText: {
+        color: isDark ? '#F6C1C1' : '#DC2626',
+      },
     },
   };
 
@@ -329,7 +355,7 @@ function ComplianceStatusSection({
       </View>
       <View style={styles.complianceGrid}>
         {complianceCards.map(item => {
-          const tone = getToneStyles(item.tone);
+          const tone = getToneStyles(item.tone, colors);
 
           return (
             <View key={item.title} style={[styles.complianceTile, { backgroundColor: colors.surface, borderColor: colors.border }]}>

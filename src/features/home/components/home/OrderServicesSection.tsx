@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
@@ -10,31 +11,45 @@ type OrderServicesSectionProps = {
 
 const serviceItems = [
   {
-    title: 'File Franchise Tax',
+    title: 'File Tax',
     subtitle: 'Delaware - Resolve overdue status',
     tag: 'Urgent',
     icon: 'file-text-o',
     tone: 'red',
   },
   {
-    title: 'IRS Tax Filing',
+    title: 'IRS Filing',
     subtitle: 'Form 1120 / 5472 preparation',
-    tag: 'Due Jul 15',
+    tag: 'Due_Jul_15',
     icon: 'file-text',
     tone: 'amber',
   },
   {
-    title: 'Add a New Entity',
+    title: 'Add Entity',
     subtitle: 'LLC, C-Corp or S-Corp - Any state',
     tag: undefined,
     icon: 'building-o',
     tone: 'blue',
   },
   {
-    title: 'Change Registered Agent',
+    title: 'Change Agent',
     subtitle: 'Nationwide - Same day processing',
     tag: undefined,
     icon: 'exchange',
+    tone: 'purple',
+  },
+  {
+    title: 'Bookkeeping',
+    subtitle: 'Monthly reconciliation and reports',
+    tag: undefined,
+    icon: 'calculator',
+    tone: 'blue',
+  },
+  {
+    title: 'Compliance Check',
+    subtitle: 'Stay ahead of filing deadlines',
+    tag: 'New',
+    icon: 'check-square-o',
     tone: 'purple',
   },
 ] as const;
@@ -76,66 +91,174 @@ function OrderServicesSection({
   onQuickAccessItemPress,
 }: OrderServicesSectionProps) {
   const colors = useThemeColors();
+  const [isExpanded, setIsExpanded] = useState(false);
+  const visibleItems = serviceItems.slice(0, 4);
+  const extraItems = serviceItems.slice(4);
 
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>
-          Order services
-        </Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Order services</Text>
+        <Pressable onPress={() => setIsExpanded(value => !value)}>
+          <Text style={styles.moreText}>{isExpanded ? 'Less' : 'More'}</Text>
+        </Pressable>
       </View>
-      <View style={styles.serviceList}>
-        {serviceItems.map(item => {
+
+      <View style={styles.gridContainer}>
+        {visibleItems.map(item => {
           const tone = getToneStyles(item.tone);
 
           return (
-            <Pressable key={item.title} style={[styles.serviceRow, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <View style={[styles.serviceIcon, tone.icon]}>
-                <FontAwesome
-                  name={item.icon}
-                  size={17}
-                  style={tone.iconText}
-                />
-              </View>
-              <View style={styles.serviceCopy}>
-                <Text style={[styles.serviceTitle, { color: colors.text }]}>{item.title}</Text>
-                <Text style={[styles.serviceSubtitle, { color: colors.muted }]}>{item.subtitle}</Text>
-              </View>
-              <View style={styles.serviceRight}>
+            <Pressable 
+              key={item.title} 
+              style={styles.gridItem}
+              // यहाँ आप अपनी आईडी पास कर सकते हैं (उदा: item.id या जो भी स्ट्रक्चर हो)
+              onPress={() => console.log(item.title)} 
+            >
+              <View style={styles.iconWrapper}>
+                {/* 1. स्क्वायर आइकॉन बॉक्स */}
+                <View style={[styles.serviceIcon, tone.icon]}>
+                  <FontAwesome
+                    name={item.icon}
+                    size={18}
+                    style={tone.iconText}
+                  />
+                </View>
+
+                {/* 2. एब्सोल्यूटली पोज़िशन किया हुआ टैग/पिल (यदि मौजूद हो) */}
                 {item.tag ? (
-                  <View style={[styles.pill, tone.tag]}>
-                    <Text style={[styles.pillText, tone.tagText]}>{item.tag}</Text>
+                  <View style={[styles.badge, tone.tag]}>
+                    <Text style={[styles.badgeText, tone.tagText]} numberOfLines={1}>
+                      {item.tag.split(' ')[0]} {/* जगह की कमी के कारण पहला शब्द (जैसे 'Urgent' या 'Due') */}
+                    </Text>
                   </View>
                 ) : null}
-                <FontAwesome name="angle-right" size={18} color={colors.muted} />
               </View>
+
+              {/* 3. मुख्य टाइटल (image_8ba545.png के टेक्स्ट स्टाइल में) */}
+              <Text style={[styles.serviceTitle, { color: colors.text }]} numberOfLines={2}>
+                {item.title}
+              </Text>
+              
+              {/* 4. छोटा सब-टेक्स्ट (वर्टिकल लिस्ट के सबटाइटल का डेटा) */}
+              {/* <Text style={[styles.serviceSubtitle, { color: colors.muted }]} numberOfLines={1}>
+                {item.subtitle.split(' - ')[0]}
+              </Text> */}
             </Pressable>
           );
         })}
       </View>
+
+      {isExpanded && extraItems.length > 0 ? (
+        <View style={styles.expandedSection}>
+          <View style={styles.expandedGridContainer}>
+            {extraItems.map(item => {
+              const tone = getToneStyles(item.tone);
+
+              return (
+                <Pressable key={`${item.title}-extra`} style={styles.gridItem} onPress={() => console.log(item.title)}>
+                  <View style={styles.iconWrapper}>
+                    <View style={[styles.serviceIcon, tone.icon]}>
+                      <FontAwesome name={item.icon} size={18} style={tone.iconText} />
+                    </View>
+                    {item.tag ? (
+                      <View style={[styles.badge, tone.tag]}>
+                        <Text style={[styles.badgeText, tone.tagText]} numberOfLines={1}>
+                          {item.tag.split(' ')[0]}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
+                  <Text style={[styles.serviceTitle, { color: colors.text }]} numberOfLines={2}>
+                    {item.title}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   section: {
-    marginTop: 14,
+    marginTop: 16,
+    paddingHorizontal: 16,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 9,
+    marginBottom: 24,
   },
   sectionTitle: {
     color: '#2C2C2A',
     fontSize: 13,
     fontWeight: '500',
   },
-  sectionLink: {
+  moreText: {
     color: '#D85A30',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  gridContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  gridItem: {
+    width: '23%', // 4 कॉलम ग्रिड के लिए परफेक्ट विड्थ
+    alignItems: 'center',
+  },
+  expandedSection: {
+    marginTop: 10,
+    paddingTop: 0,
+  },
+  expandedGridContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+    flexWrap: 'wrap',
+    rowGap: 16,
+  },
+  iconWrapper: {
+    position: 'relative',
+    marginBottom: 8,
+  },
+  serviceIcon: {
+    width: 54, // image_8ba545.png की तरह परफेक्ट स्क्वायर साइज
+    height: 54,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+  },
+  serviceTitle: {
     fontSize: 11,
     fontWeight: '500',
+    textAlign: 'center',
+    lineHeight: 14,
+    minHeight: 28,
+  },
+  serviceSubtitle: {
+    fontSize: 9,
+    textAlign: 'center',
+    marginTop: 2,
+    opacity: 0.7,
+  },
+  badge: {
+    position: 'absolute',
+    top: -5,
+    right: -10,
+    borderRadius: 8,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    maxWidth: 45,
+  },
+  badgeText: {
+    fontSize: 8,
+    fontWeight: '600',
   },
   iconBlue: {
     backgroundColor: '#DBEAFE',
@@ -184,51 +307,6 @@ const styles = StyleSheet.create({
   },
   tagTextPurple: {
     color: '#7C3AED',
-  },
-  serviceList: {
-    gap: 7,
-  },
-  serviceRow: {
-    minHeight: 58,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 13,
-    paddingVertical: 11,
-  },
-  serviceIcon: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 9,
-  },
-  serviceCopy: {
-    flex: 1,
-  },
-  serviceTitle: {
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  serviceSubtitle: {
-    fontSize: 11,
-    marginTop: 1,
-  },
-  serviceRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  pill: {
-    borderRadius: 20,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  pillText: {
-    fontSize: 10,
-    fontWeight: '500',
   },
 });
 

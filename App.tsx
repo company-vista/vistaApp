@@ -89,6 +89,7 @@ function AppContent() {
   const [quickAccessBackScreen, setQuickAccessBackScreen] =
     useState<'home' | 'quickAccess'>('home');
   const [homeInitialTab, setHomeInitialTab] = useState<'home' | 'company' | 'reports' | 'billing' | 'more'>('home');
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
   const authFadeAnim = useRef(new Animated.Value(1)).current;
   const authSlideAnim = useRef(new Animated.Value(0)).current;
 
@@ -166,6 +167,7 @@ function AppContent() {
           onQuickAccessItemPress={itemId => openQuickAccessItem(itemId, 'home')}
           onQuickAccessViewAllPress={() => setAppScreen('quickAccess')}
           onGoHome={() => setHomeInitialTab('home')}
+          onCompanyChange={setSelectedCompanyId}
         />
       ) : isAuthenticated && appScreen === 'invoiceDetail' && selectedInvoice ? (
         <InvoiceDetailScreen
@@ -178,6 +180,7 @@ function AppContent() {
         <FollowUsScreen onBackPress={() => setAppScreen('home')} />
       ) : isAuthenticated && appScreen === 'notifications' ? (
         <NotificationScreen
+          companyId={selectedCompanyId}
           onBackPress={() => setAppScreen('home')}
           onNotificationPress={openNotificationDetail}
         />

@@ -101,9 +101,9 @@ function isClientCompanyArray(value: unknown): value is ClientCompany[] {
 
     return Boolean(
       record.companyName ??
-        record.businessName ??
-        record.legalName ??
-        record.companyEmail,
+      record.businessName ??
+      record.legalName ??
+      record.companyEmail,
     );
   });
 }
@@ -166,15 +166,15 @@ function isClientCompany(value: unknown): value is ClientCompany {
 
   return Boolean(
     record._id ??
-      record.id ??
-      record.companyName ??
-      record.businessName ??
-      record.legalName ??
-      record.companyEmail ??
-      record.EIN ??
-      record.Ein ??
-      record.ein ??
-      record.einNumber,
+    record.id ??
+    record.companyName ??
+    record.businessName ??
+    record.legalName ??
+    record.companyEmail ??
+    record.EIN ??
+    record.Ein ??
+    record.ein ??
+    record.einNumber,
   );
 }
 
@@ -334,7 +334,7 @@ export async function fetchClientCompanies({
         timeout: API_REQUEST_TIMEOUT_MS,
       });
       const companies = getResponseCompanies(response.data);
-      
+
       console.log('Client profile companies loaded', {
         companyCount: companies.length,
         success: response.data.success,
@@ -434,10 +434,10 @@ export async function fetchClientCompanyDetails({
       companyId,
       einLoaded: Boolean(
         company?.EIN ??
-          company?.Ein ??
-          company?.ein ??
-          company?.einNumber ??
-          company?.federalTaxId,
+        company?.Ein ??
+        company?.ein ??
+        company?.einNumber ??
+        company?.federalTaxId,
       ),
       success: response.data.success,
       url: companyDetailsRoute,
@@ -513,14 +513,6 @@ export async function fetchCompanyComplianceHistory({
     );
     const history = getResponseComplianceHistory(response.data);
 
-    console.log('Company compliance history loaded', {
-      companyId,
-      historyCount: history.length,
-      records: history.map(item => item.complianceName),
-      success: response.data.success,
-      url: complianceHistoryRoute,
-    });
-
     return {
       error: '',
       history,
@@ -528,15 +520,6 @@ export async function fetchCompanyComplianceHistory({
     };
   } catch (error) {
     const axiosError = error as AxiosError<{ message?: string; error?: string }>;
-
-    console.log('Company compliance history API error', {
-      companyId,
-      message: axiosError.message,
-      response: axiosError.response?.data,
-      status: axiosError.response?.status,
-      tokenLoaded: Boolean(token),
-      url: complianceHistoryRoute,
-    });
 
     return {
       error: getErrorMessage(error),
