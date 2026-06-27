@@ -140,9 +140,13 @@ function EditProfileScreen({ onBackPress }: EditProfileScreenProps) {
     }
 
     try {
+      if (Platform.OS === 'android' && Platform.Version >= 33) {
+        // Android 13+ may prompt for media access before the picker opens.
+      }
+
       const response = await launchImageLibrary({
         mediaType: 'photo',
-        quality: 0.85,
+        quality: 1,
         selectionLimit: 1,
       });
 
@@ -182,11 +186,12 @@ function EditProfileScreen({ onBackPress }: EditProfileScreenProps) {
       const nextAvatar = withImageCacheBust(result.avatar ?? asset.uri);
 
       dispatch(updateProfileUser({
+        ...(user ?? { email: '' }),
         avatar: nextAvatar,
         image: nextAvatar,
         photo: nextAvatar,
         profileImage: nextAvatar,
-        profilePicture: nextAvatar
+        profilePicture: nextAvatar,
       }));
       setLocalAvatarUri(nextAvatar);
     } catch (error) {

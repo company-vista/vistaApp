@@ -30,7 +30,9 @@ import {
 import { mapCompanyToListItem } from './quickAccess/companyListItem';
 import BillingTabContent from './invoices/InvoicesTabContent';
 import CompanyTabContent from '../components/CompanyTabContent';
-import CompanyDetailScreen, { type CompanyDetailSection } from '../components/CompanyDetailScreen';
+import CompanyDetailScreen, {
+  type CompanyDetailSection,
+} from '../components/CompanyDetailScreen';
 import DocumentsTabContent from './documents/DocumentsTabContent';
 import DocumentViewScreen from './documents/DocumentViewScreen';
 import type { DocumentItem } from '../api/clientDocumentApi';
@@ -43,6 +45,18 @@ import type { QuickAccessItemId } from '../data/quickAccessItems';
 
 const emptyCompanies: ClientCompany[] = [];
 
+type RenewActionData = {
+  id: 'address' | 'annual_filing' | 'resident' | 'federal_filing';
+  title: string;
+  subtitle: string;
+  status: string;
+  date: string;
+  details: { label: string; value: string; icon?: string }[];
+  companyId?: string | null;
+  price?: number;
+  years?: number;
+};
+
 type HomeScreenProps = {
   initialTab?: TabId;
   onFollowUsPress: () => void;
@@ -54,9 +68,10 @@ type HomeScreenProps = {
   onQuickAccessItemPress: (itemId: QuickAccessItemId) => void;
   onQuickAccessViewAllPress: () => void;
   onCompanyChange?: (companyId: string | null) => void;
+  onOpenRenewPage?: (action: RenewActionData) => void;
 };
 
-function HomeScreen({
+export default function HomeScreen({
   initialTab,
   onFollowUsPress,
   onHelpFeedbackPress,
@@ -67,6 +82,7 @@ function HomeScreen({
   onQuickAccessItemPress,
   onQuickAccessViewAllPress,
   onCompanyChange,
+  onOpenRenewPage,
 }: HomeScreenProps) {
   const safeAreaInsets = useSafeAreaInsets();
   const colors = useThemeColors();
@@ -81,32 +97,58 @@ function HomeScreen({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [notificationCount, setNotificationCount] = useState(0);
-  const [selectedCompany, setSelectedCompany] = useState<CompanyCardItem | null>(null);
-  const [activeCompanySection, setActiveCompanySection] = useState<CompanyDetailSection | 'menu' | null>(null);
+  const [selectedCompany, setSelectedCompany] =
+    useState<CompanyCardItem | null>(null);
+  const [activeCompanySection, setActiveCompanySection] = useState<
+    CompanyDetailSection | 'menu' | null
+  >(null);
   const [isManageScreenOpen, setIsManageScreenOpen] = useState(false);
   const [isTransactionsOpen, setIsTransactionsOpen] = useState(false);
   const [companyOptions, setCompanyOptions] = useState<CompanyCardItem[]>([]);
   const [isCompanySwitcherOpen, setIsCompanySwitcherOpen] = useState(false);
-  const [selectedDocumentForView, setSelectedDocumentForView] = useState<DocumentItem | null>(null);
+  const [selectedDocumentForView, setSelectedDocumentForView] =
+    useState<DocumentItem | null>(null);
   const [isLoadingCompanies, setIsLoadingCompanies] = useState(false);
   const fabMenuAnim = useRef(new Animated.Value(0)).current;
   const companySwitcherAnim = useRef(new Animated.Value(0)).current;
   const moreSlideAnim = useRef(new Animated.Value(320)).current;
   const bellAnim = useRef(new Animated.Value(0)).current;
   const fabMenuOpacity = fabMenuAnim;
+
   useEffect(() => {
     onCompanyChange?.(selectedCompany?.id ?? null);
   }, [selectedCompany, onCompanyChange]);
+
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(bellAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
-        Animated.timing(bellAnim, { toValue: -1, duration: 100, useNativeDriver: true }),
-        Animated.timing(bellAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
-        Animated.timing(bellAnim, { toValue: -1, duration: 100, useNativeDriver: true }),
-        Animated.timing(bellAnim, { toValue: 0, duration: 100, useNativeDriver: true }),
+        Animated.timing(bellAnim, {
+          toValue: 1,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+        Animated.timing(bellAnim, {
+          toValue: -1,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+        Animated.timing(bellAnim, {
+          toValue: 1,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+        Animated.timing(bellAnim, {
+          toValue: -1,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+        Animated.timing(bellAnim, {
+          toValue: 0,
+          duration: 100,
+          useNativeDriver: true,
+        }),
         Animated.delay(2000),
-      ])
+      ]),
     ).start();
   }, [bellAnim]);
 
@@ -133,18 +175,26 @@ function HomeScreen({
     outputRange: [-10, 0],
   });
   const profileImage =
-    user?.profileImage ?? user?.profilePicture ?? user?.avatar ?? user?.image ?? user?.photo;
+    user?.profileImage ??
+    user?.profilePicture ??
+    user?.avatar ??
+    user?.image ??
+    user?.photo;
   const displayName =
-    user?.name ?? [user?.firstName, user?.lastName].filter(Boolean).join(' ') ?? 'User';
+    user?.name ??
+    [user?.firstName, user?.lastName].filter(Boolean).join(' ') ??
+    'User';
 
   useEffect(() => {
     let isMounted = true;
 
-    fetchNotifications({ token, companyId: selectedCompany?.id }).then(result => {
-      if (isMounted && result.isSuccess) {
-        setNotificationCount(result.notifications.length);
-      }
-    });
+    fetchNotifications({ token, companyId: selectedCompany?.id }).then(
+      result => {
+        if (isMounted && result.isSuccess) {
+          setNotificationCount(result.notifications.length);
+        }
+      },
+    );
 
     return () => {
       isMounted = false;
@@ -156,23 +206,27 @@ function HomeScreen({
 
     setIsLoadingCompanies(true);
 
-    fetchClientCompanies({ token }).then(result => {
-      if (!isMounted) {
-        return;
-      }
+    fetchClientCompanies({ token })
+      .then(result => {
+        if (!isMounted) {
+          return;
+        }
 
-      const loadedCompanies =
-        result.companies.length > 0 ? result.companies : userCompanies;
-      const mappedCompanies = loadedCompanies.map(mapCompanyToListItem);
+        const loadedCompanies =
+          result.companies.length > 0 ? result.companies : userCompanies;
+        const mappedCompanies = loadedCompanies.map(mapCompanyToListItem);
 
-      setCompanyOptions(mappedCompanies);
+        setCompanyOptions(mappedCompanies);
 
-      setSelectedCompany(currentCompany => currentCompany ?? mappedCompanies[0] ?? null);
-    }).finally(() => {
-      if (isMounted) {
-        setIsLoadingCompanies(false);
-      }
-    });
+        setSelectedCompany(
+          currentCompany => currentCompany ?? mappedCompanies[0] ?? null,
+        );
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoadingCompanies(false);
+        }
+      });
 
     return () => {
       isMounted = false;
@@ -203,33 +257,38 @@ function HomeScreen({
 
         return {
           ...currentCompany,
-          companyType:
-            detailCompany.companyType || currentCompany.companyType,
+          companyType: detailCompany.companyType || currentCompany.companyType,
           countryOfIncorporation:
             detailCompany.countryOfIncorporation ||
             currentCompany.countryOfIncorporation,
-          date: detailCompany.date === 'N/A' ? currentCompany.date : detailCompany.date,
+          date:
+            detailCompany.date === 'N/A'
+              ? currentCompany.date
+              : detailCompany.date,
           ein: detailCompany.ein || currentCompany.ein,
           status: detailCompany.status || currentCompany.status,
         };
       });
 
-      setCompanyOptions(currentCompanies => currentCompanies.map(company => {
-        if (company.id !== selectedCompany.id) {
-          return company;
-        }
+      setCompanyOptions(currentCompanies =>
+        currentCompanies.map(company => {
+          if (company.id !== selectedCompany.id) {
+            return company;
+          }
 
-        return {
-          ...company,
-          companyType: detailCompany.companyType || company.companyType,
-          countryOfIncorporation:
-            detailCompany.countryOfIncorporation ||
-            company.countryOfIncorporation,
-          date: detailCompany.date === 'N/A' ? company.date : detailCompany.date,
-          ein: detailCompany.ein || company.ein,
-          status: detailCompany.status || company.status,
-        };
-      }));
+          return {
+            ...company,
+            companyType: detailCompany.companyType || company.companyType,
+            countryOfIncorporation:
+              detailCompany.countryOfIncorporation ||
+              company.countryOfIncorporation,
+            date:
+              detailCompany.date === 'N/A' ? company.date : detailCompany.date,
+            ein: detailCompany.ein || company.ein,
+            status: detailCompany.status || company.status,
+          };
+        }),
+      );
     });
 
     return () => {
@@ -353,7 +412,9 @@ function HomeScreen({
   if (activeCompanySection) {
     return (
       <CompanyDetailScreen
-        activeSection={activeCompanySection === 'menu' ? undefined : activeCompanySection}
+        activeSection={
+          activeCompanySection === 'menu' ? undefined : activeCompanySection
+        }
         selectedCompany={selectedCompany}
         onBackPress={() => setActiveCompanySection(null)}
       />
@@ -380,22 +441,39 @@ function HomeScreen({
 
   if (isTransactionsOpen) {
     return (
-      <TransactionsScreen onBackPress={closeTransactionsScreen} selectedCompany={selectedCompany} />
+      <TransactionsScreen
+        onBackPress={closeTransactionsScreen}
+        selectedCompany={selectedCompany}
+      />
     );
   }
 
+  const HEADER_CONTENT_HEIGHT = 72;
+
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <ScrollView
-        contentContainerStyle={[
-          styles.content,
-          {
-            paddingTop: safeAreaInsets.top + 22,
-            paddingBottom: safeAreaInsets.bottom + 116,
-          },
-        ]}
-        showsVerticalScrollIndicator={false}>
-
+      {/* Fixed header wrapper */}
+      <View
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: safeAreaInsets.top + HEADER_CONTENT_HEIGHT,
+          zIndex: 30,
+          justifyContent: 'center',
+          paddingTop: safeAreaInsets.top,
+          paddingHorizontal: 18,
+          backgroundColor: colors.background,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.03,
+          shadowRadius: 12,
+          elevation: 14,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+        }}
+      >
         <HomeHeader
           displayName={displayName}
           profileImage={profileImage}
@@ -409,7 +487,18 @@ function HomeScreen({
           onProfilePress={onProfilePress}
           colors={colors}
         />
+      </View>
 
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingTop: safeAreaInsets.top + HEADER_CONTENT_HEIGHT + 16, // leave space for fixed header
+            paddingBottom: safeAreaInsets.bottom + 116,
+          },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
         {activeTab === 'home' ? (
           <HomeTabContent
             isLoadingCompanies={isLoadingCompanies}
@@ -428,7 +517,9 @@ function HomeScreen({
             onSectionPress={setActiveCompanySection}
           />
         ) : null}
-        {activeTab === 'reports' ? <ReportsTabContent selectedCompany={selectedCompany} /> : null}
+        {activeTab === 'reports' ? (
+          <ReportsTabContent selectedCompany={selectedCompany} onOpenRenewPage={onOpenRenewPage} />
+        ) : null}
         {activeTab === 'billing' ? (
           <BillingTabContent
             onInvoicePress={onInvoicePress}
@@ -439,7 +530,7 @@ function HomeScreen({
         {activeTab === 'documents' ? (
           <DocumentsTabContent
             selectedCompany={selectedCompany}
-            onDocumentViewPress={(doc) => setSelectedDocumentForView(doc)}
+            onDocumentViewPress={doc => setSelectedDocumentForView(doc)}
           />
         ) : null}
       </ScrollView>
@@ -479,13 +570,22 @@ function HomeScreen({
                 paddingBottom: safeAreaInsets.bottom + 24,
                 transform: [{ translateY: moreSlideAnim }],
               },
-            ]}>
-            <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
+            ]}
+          >
+            <View
+              style={[styles.sheetHandle, { backgroundColor: colors.border }]}
+            />
             <View style={styles.sheetHeader}>
-              <Text style={[styles.sheetTitle, { color: colors.text }]}>More</Text>
+              <Text style={[styles.sheetTitle, { color: colors.text }]}>
+                More
+              </Text>
               <Pressable
                 onPress={() => closeMoreSheet()}
-                style={[styles.sheetCloseButton, { backgroundColor: colors.surface }]}>
+                style={[
+                  styles.sheetCloseButton,
+                  { backgroundColor: colors.surface },
+                ]}
+              >
                 <FontAwesome name="close" size={18} color={colors.text} />
               </Pressable>
             </View>
@@ -521,5 +621,3 @@ function HomeScreen({
     </View>
   );
 }
-
-export default HomeScreen;

@@ -20,7 +20,10 @@ import TransactionDetailScreen, {
 import { fetchSubscriptionPayments } from '../api/subscriptionPaymentsApi';
 import { formatDate } from '../../../constants/dateFormatter';
 import type { CompanyCardItem } from './quickAccess/CompanyCard';
-import { matchesSelectedCompany, matchesTransactionSearch } from './transactionsUtils';
+import {
+  matchesSelectedCompany,
+  matchesTransactionSearch,
+} from './transactionsUtils';
 import { formatCurrency } from '../../../constants/currencyConverter';
 
 type TransactionItem = {
@@ -66,7 +69,10 @@ type ApiTransactionItem = {
   [key: string]: unknown;
 };
 
-function formatAmountField(value: string | number | undefined, currency?: string) {
+function formatAmountField(
+  value: string | number | undefined,
+  currency?: string,
+) {
   const resolvedCurrency = currency && currency.trim() ? currency : 'USD';
 
   if (value === undefined || value === null || value === '') {
@@ -78,7 +84,9 @@ function formatAmountField(value: string | number | undefined, currency?: string
   }
 
   const parsed = Number(String(value).replace(/[^0-9.-]+/g, ''));
-  return Number.isFinite(parsed) ? formatCurrency(parsed, resolvedCurrency) : String(value);
+  return Number.isFinite(parsed)
+    ? formatCurrency(parsed, resolvedCurrency)
+    : String(value);
 }
 
 function parseApiAmount(value: string | number | undefined) {
@@ -95,10 +103,18 @@ function getApiStatus(value?: string, isActive?: boolean): string {
   if (typeof value === 'string' && value.trim()) {
     const normalized = value.trim().toLowerCase();
     if (normalized.includes('active')) return 'Active';
-    if (normalized.includes('success') || normalized.includes('paid') || normalized.includes('su')) {
+    if (
+      normalized.includes('success') ||
+      normalized.includes('paid') ||
+      normalized.includes('su')
+    ) {
       return 'Success';
     }
-    if (normalized.includes('fail') || normalized.includes('decline') || normalized.includes('cancel')) {
+    if (
+      normalized.includes('fail') ||
+      normalized.includes('decline') ||
+      normalized.includes('cancel')
+    ) {
       return 'Failed';
     }
     return value.trim().charAt(0).toUpperCase() + value.trim().slice(1);
@@ -117,7 +133,9 @@ function normalizeApiTransaction(item: ApiTransactionItem): TransactionItem {
     item.type?.replace(/_/g, ' ') ||
     'Payment';
 
-  const amountNumber = parseApiAmount(item.amount ?? item.onlineAmount ?? item.cashAmount);
+  const amountNumber = parseApiAmount(
+    item.amount ?? item.onlineAmount ?? item.cashAmount,
+  );
   const onlineAmountNumber = parseApiAmount(item.onlineAmount);
   const cashAmountNumber = parseApiAmount(item.cashAmount);
 
@@ -131,8 +149,12 @@ function normalizeApiTransaction(item: ApiTransactionItem): TransactionItem {
   const details: TransactionDetail = {
     _id: String(item._id ?? item.id ?? item.transactionId ?? 'unknown'),
     amount: amountNumber,
-    onlineAmount: Number.isFinite(onlineAmountNumber) ? onlineAmountNumber : undefined,
-    cashAmount: Number.isFinite(cashAmountNumber) ? cashAmountNumber : undefined,
+    onlineAmount: Number.isFinite(onlineAmountNumber)
+      ? onlineAmountNumber
+      : undefined,
+    cashAmount: Number.isFinite(cashAmountNumber)
+      ? cashAmountNumber
+      : undefined,
     currency: String(item.currency ?? 'USD').toUpperCase(),
     date: item.date ?? item.createdAt ?? '',
     status: statusValue.toLowerCase() as TransactionDetail['status'],
@@ -142,7 +164,9 @@ function normalizeApiTransaction(item: ApiTransactionItem): TransactionItem {
     company: companyId,
     paymentMethod: String(item.method ?? item.paymentMethod ?? ''),
     referenceId: String(item.referenceId ?? ''),
-    transactionId: String(item.transactionId ?? item.referenceId ?? item._id ?? ''),
+    transactionId: String(
+      item.transactionId ?? item.referenceId ?? item._id ?? '',
+    ),
     gateway: String(item.gateway ?? ''),
     bankName: String(item.bankName ?? ''),
     accountLast4: String(item.accountLast4 ?? ''),
@@ -154,12 +178,23 @@ function normalizeApiTransaction(item: ApiTransactionItem): TransactionItem {
   };
 
   return {
-    id: String(item._id ?? item.id ?? item.transactionId ?? item.referenceId ?? title ?? 'unknown'),
+    id: String(
+      item._id ??
+        item.id ??
+        item.transactionId ??
+        item.referenceId ??
+        title ??
+        'unknown',
+    ),
     title,
     date: item.date ?? item.createdAt ?? '',
     amount: formatAmountField(amountNumber, item.currency),
-    onlineAmount: Number.isFinite(onlineAmountNumber) ? formatAmountField(onlineAmountNumber, item.currency) : undefined,
-    cashAmount: Number.isFinite(cashAmountNumber) ? formatAmountField(cashAmountNumber, item.currency) : undefined,
+    onlineAmount: Number.isFinite(onlineAmountNumber)
+      ? formatAmountField(onlineAmountNumber, item.currency)
+      : undefined,
+    cashAmount: Number.isFinite(cashAmountNumber)
+      ? formatAmountField(cashAmountNumber, item.currency)
+      : undefined,
     status: statusValue,
     method: String(item.method ?? item.paymentMethod ?? 'Unknown'),
     category: String(item.category ?? item.type ?? 'Payment'),
@@ -172,14 +207,20 @@ type TransactionsScreenProps = {
   selectedCompany?: CompanyCardItem | null;
 };
 
-export default function TransactionsScreen({ onBackPress, selectedCompany }: TransactionsScreenProps) {
+export default function TransactionsScreen({
+  onBackPress,
+  selectedCompany,
+}: TransactionsScreenProps) {
   const safeAreaInsets = useSafeAreaInsets();
   const colors = useThemeColors();
   const token = useAppSelector(state => state.auth.token);
-  const [activeFilter, setActiveFilter] = useState<'All' | 'Success' | 'Pending' | 'Failed'>('All');
+  const [activeFilter, setActiveFilter] = useState<
+    'All' | 'Success' | 'Pending' | 'Failed'
+  >('All');
   const [search, setSearch] = useState<string>('');
   const [transactions, setTransactions] = useState<TransactionItem[]>([]);
-  const [selectedTransaction, setSelectedTransaction] = useState<TransactionItem | null>(null);
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<TransactionItem | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [errorMessage, setErrorMessage] = useState<string>('');
 
@@ -205,33 +246,45 @@ export default function TransactionsScreen({ onBackPress, selectedCompany }: Tra
       }
     }
     loadTransactions();
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, [token]);
 
   const filteredTransactions = useMemo(() => {
     const baseTransactions = transactions.filter(item => {
-      const matchesFilter = activeFilter === 'All' || item.status === activeFilter;
+      const matchesFilter =
+        activeFilter === 'All' || item.status === activeFilter;
       const matchesSearch = matchesTransactionSearch(item, search);
       return matchesFilter && matchesSearch;
     });
 
     if (!selectedCompany?.id) return baseTransactions;
 
-    return baseTransactions.filter(item => matchesSelectedCompany(item as never, selectedCompany));
-  }, [activeFilter, search, selectedCompany, selectedCompany?.id, transactions]);
+    return baseTransactions.filter(item =>
+      matchesSelectedCompany(item as never, selectedCompany),
+    );
+  }, [
+    activeFilter,
+    search,
+    selectedCompany,
+    selectedCompany?.id,
+    transactions,
+  ]);
 
   // UI समरी कार्ड्स के लिए डायनामिक करेंसी रेंडरिंग लॉजिक
   const summaryDOM = useMemo(() => {
     const totals: Record<string, { total: number; pending: number }> = {};
-    
+
     filteredTransactions.forEach(item => {
       const currency = item.details?.currency || 'USD';
-      const parsedAmount = Number(String(item.amount).replace(/[^0-9.-]+/g, '')) || 0;
-      
+      const parsedAmount =
+        Number(String(item.amount).replace(/[^0-9.-]+/g, '')) || 0;
+
       if (!totals[currency]) {
         totals[currency] = { total: 0, pending: 0 };
       }
-      
+
       totals[currency].total += parsedAmount;
       if (item.status === 'Pending') {
         totals[currency].pending += parsedAmount;
@@ -240,14 +293,10 @@ export default function TransactionsScreen({ onBackPress, selectedCompany }: Tra
 
     const keys = Object.keys(totals);
     if (keys.length === 0) {
-      return { totalStr: formatCurrency(0, 'USD'), pendingStr: formatCurrency(0, 'USD') };
+      return { totals: { USD: { total: 0, pending: 0 } }, keys: ['USD'] };
     }
 
-    // अगर मल्टीपल करेंसी हैं तो सबको कॉमा से अलग करके दिखाएगा (उदा: $10, ₹500)
-    const totalStr = keys.map(k => formatCurrency(totals[k].total, k)).join(', ');
-    const pendingStr = keys.map(k => formatCurrency(totals[k].pending, k)).join(', ');
-
-    return { totalStr, pendingStr };
+    return { totals, keys };
   }, [filteredTransactions]);
 
   const getStatusColor = (status: TransactionItem['status']) => {
@@ -286,35 +335,73 @@ export default function TransactionsScreen({ onBackPress, selectedCompany }: Tra
   }
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.background, paddingTop: safeAreaInsets.top + 22 }]}>
+    <View
+      style={[
+        styles.screen,
+        {
+          backgroundColor: colors.background,
+          paddingTop: safeAreaInsets.top + 22,
+        },
+      ]}
+    >
       {/* Header */}
       <View style={styles.header}>
         <BackButton onPress={onBackPress} />
         <Text style={[styles.title, { color: colors.text }]}>Transactions</Text>
       </View>
 
-      {/* Summary Cards */}
+      {/* Summary Cards (one per currency) */}
       <View style={styles.summaryContainer}>
-        <View style={[styles.summaryCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.summaryLabel, { color: colors.muted }]}>Total Spent</Text>
-          <Text style={[styles.summaryValue, { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>
-            {summaryDOM.totalStr}
-          </Text>
-        </View>
-        <View style={[styles.summaryCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.summaryLabel, { color: colors.muted }]}>Pending</Text>
-          <Text style={[styles.summaryValue, { color: '#ca8a04' }]} numberOfLines={1} adjustsFontSizeToFit>
-            {summaryDOM.pendingStr}
-          </Text>
-        </View>
+        {summaryDOM.keys.map(currency => (
+          <View
+            key={currency}
+            style={[
+              styles.summaryCard,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
+            <Text style={[styles.summaryLabel, { color: colors.muted }]}>
+              Total Spent ({currency})
+            </Text>
+            <Text
+              style={[styles.summaryValue, { color: colors.text }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
+              {formatCurrency(summaryDOM.totals[currency].total, currency)}
+            </Text>
+            <Text
+              style={[
+                styles.summaryLabel,
+                { color: colors.muted, marginTop: 8 },
+              ]}
+            >
+              Pending ({currency})
+            </Text>
+            <Text
+              style={[styles.summaryValue, { color: '#ca8a04' }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
+              {formatCurrency(summaryDOM.totals[currency].pending, currency)}
+            </Text>
+          </View>
+        ))}
       </View>
 
       {/* Search */}
       <View style={styles.searchContainer}>
         <TextInput
-          placeholder="Search by amount or type"
+          placeholder="Search by amount or methods"
           placeholderTextColor={colors.muted}
-          style={[styles.searchInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.surface }]}
+          style={[
+            styles.searchInput,
+            {
+              color: colors.text,
+              borderColor: colors.border,
+              backgroundColor: colors.surface,
+            },
+          ]}
           value={search}
           onChangeText={setSearch}
           returnKeyType="search"
@@ -332,10 +419,21 @@ export default function TransactionsScreen({ onBackPress, selectedCompany }: Tra
               style={[
                 styles.filterButton,
                 { backgroundColor: colors.surface, borderColor: colors.border },
-                isActive ? { borderColor: colors.accent, backgroundColor: colors.accentSoft } : null,
+                isActive
+                  ? {
+                      borderColor: colors.accent,
+                      backgroundColor: colors.accentSoft,
+                    }
+                  : null,
               ]}
             >
-              <Text style={[styles.filterText, { color: colors.text }, isActive ? { color: colors.accent, fontWeight: '700' } : null]}>
+              <Text
+                style={[
+                  styles.filterText,
+                  { color: colors.text },
+                  isActive ? { color: colors.accent, fontWeight: '700' } : null,
+                ]}
+              >
                 {filter}
               </Text>
             </Pressable>
@@ -346,40 +444,100 @@ export default function TransactionsScreen({ onBackPress, selectedCompany }: Tra
       {isLoading ? (
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color={colors.accent} />
-          <Text style={[styles.emptyText, { color: colors.text, marginTop: 12 }]}>Loading transactions...</Text>
+          <Text
+            style={[styles.emptyText, { color: colors.text, marginTop: 12 }]}
+          >
+            Loading transactions...
+          </Text>
         </View>
       ) : errorMessage ? (
-        <View style={[styles.emptyContainer, { backgroundColor: colors.surface }]}>
-          <FontAwesome name="exclamation-circle" size={40} color={colors.accent} />
-          <Text style={[styles.emptyText, { color: colors.text, textAlign: 'center' }]}>{errorMessage}</Text>
+        <View
+          style={[styles.emptyContainer, { backgroundColor: colors.surface }]}
+        >
+          <FontAwesome
+            name="exclamation-circle"
+            size={40}
+            color={colors.accent}
+          />
+          <Text
+            style={[
+              styles.emptyText,
+              { color: colors.text, textAlign: 'center' },
+            ]}
+          >
+            {errorMessage}
+          </Text>
         </View>
       ) : (
         <FlatList
           data={filteredTransactions}
           keyExtractor={item => item.id}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: safeAreaInsets.bottom + 24 }}
+          contentContainerStyle={{
+            paddingHorizontal: 20,
+            paddingBottom: safeAreaInsets.bottom + 24,
+          }}
           ListEmptyComponent={
-            <View style={[styles.emptyContainer, { backgroundColor: colors.surface }]}>
+            <View
+              style={[
+                styles.emptyContainer,
+                { backgroundColor: colors.surface },
+              ]}
+            >
               <FontAwesome name="credit-card" size={40} color={colors.muted} />
-              <Text style={[styles.emptyText, { color: colors.text }]}>No transactions found</Text>
+              <Text style={[styles.emptyText, { color: colors.text }]}>
+                No transactions found
+              </Text>
             </View>
           }
           renderItem={({ item }) => (
             <Pressable onPress={() => setSelectedTransaction(item)}>
-              <View style={[styles.txCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                <View style={[styles.iconContainer, { backgroundColor: colors.background }]}>
-                  <FontAwesome name="file-text-o" size={18} color={colors.accent} />
+              <View
+                style={[
+                  styles.txCard,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.iconContainer,
+                    { backgroundColor: colors.background },
+                  ]}
+                >
+                  <FontAwesome
+                    name="file-text-o"
+                    size={18}
+                    color={colors.accent}
+                  />
                 </View>
                 <View style={styles.middleSection}>
-                  <Text style={[styles.txTitle, { color: colors.text }]}>{item.title}</Text>
+                  <Text style={[styles.txTitle, { color: colors.text }]}>
+                    {item.title}
+                  </Text>
                   <Text style={[styles.txSubtitle, { color: colors.muted }]}>
-                    {formatDate(item.date)}  •  method: {item.method}
+                    {formatDate(item.date)} • method: {item.method}
                   </Text>
                 </View>
                 <View style={styles.rightSection}>
-                  <Text style={[styles.txAmount, { color: colors.text }]}>{item.amount}</Text>
-                  <View style={[styles.statusBadge, { backgroundColor: getStatusBg(item.status) }]}>
-                    <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>{item.status}</Text>
+                  <Text style={[styles.txAmount, { color: colors.text }]}>
+                    {item.amount}
+                  </Text>
+                  <View
+                    style={[
+                      styles.statusBadge,
+                      { backgroundColor: getStatusBg(item.status) },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.statusText,
+                        { color: getStatusColor(item.status) },
+                      ]}
+                    >
+                      {item.status}
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -393,27 +551,85 @@ export default function TransactionsScreen({ onBackPress, selectedCompany }: Tra
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, gap: 12, marginBottom: 20 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    gap: 12,
+    marginBottom: 20,
+  },
   title: { fontSize: 20, fontWeight: '500' },
   searchContainer: { paddingHorizontal: 20, marginBottom: 16 },
-  searchInput: { height: 50, borderRadius: 10, borderWidth: 1, paddingHorizontal: 12, borderColor: '#ccc' },
-  summaryContainer: { flexDirection: 'row', paddingHorizontal: 20, gap: 12, marginBottom: 20 },
+  searchInput: {
+    height: 50,
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    borderColor: '#ccc',
+  },
+  summaryContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    gap: 12,
+    marginBottom: 20,
+  },
   summaryCard: { flex: 1, padding: 16, borderRadius: 16, borderWidth: 1 },
   summaryLabel: { fontSize: 12, fontWeight: '600', marginBottom: 6 },
-  summaryValue: { fontSize: 18, fontWeight: '800' },
-  filterRow: { flexDirection: 'row', paddingHorizontal: 20, gap: 8, marginBottom: 16 },
-  filterButton: { flex: 1, height: 34, borderRadius: 10, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
+  summaryValue: { fontSize: 16, fontWeight: '800' },
+  filterRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    gap: 8,
+    marginBottom: 16,
+  },
+  filterButton: {
+    flex: 1,
+    height: 34,
+    borderRadius: 10,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   filterText: { fontSize: 12, fontWeight: '500' },
-  txCard: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 16, borderWidth: 1, marginBottom: 10 },
-  iconContainer: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  txCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 10,
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
   middleSection: { flex: 1 },
   txTitle: { fontSize: 14, fontWeight: '500', marginBottom: 4 },
   txSubtitle: { fontSize: 11 },
   rightSection: { alignItems: 'flex-end' },
-  txAmount: { fontSize: 14, fontWeight: '600', marginBottom: 4, textAlign: 'right' },
-  centerContent: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20 },
+  txAmount: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 4,
+    textAlign: 'right',
+  },
+  centerContent: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
   statusBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
   statusText: { fontSize: 9, fontWeight: '800' },
-  emptyContainer: { padding: 40, borderRadius: 16, alignItems: 'center', gap: 12 },
+  emptyContainer: {
+    padding: 40,
+    borderRadius: 16,
+    alignItems: 'center',
+    gap: 12,
+  },
   emptyText: { fontSize: 14, fontWeight: '600' },
 });

@@ -10,10 +10,32 @@ import styles from './TabPlaceholder.styles';
 
 import { formatDate } from '../../../constants/dateFormatter';
 
+type RenewActionData = {
+  id: 'address' | 'annual_filing' | 'resident' | 'federal_filing';
+  title: string;
+  subtitle: string;
+  status: string;
+  date: string;
+  details: { label: string; value: string; icon?: string }[];
+  companyId?: string | null;
+  price?: number;
+  years?: number;
+  services?: Array<{
+    id?: number | string | null;
+    name?: string | null;
+    lastDate?: string | null;
+    dueDate?: string | null;
+    price?: number | null;
+    years?: number | null;
+    isExpired?: boolean | null;
+  }> | null;
+};
+
 type TabPlaceholderProps = {
   icon?: string;
   title?: string;
   companyId?: string;
+  onOpenRenewPage?: (action: RenewActionData) => void;
 };
 
 // Typescript Structure for Actions
@@ -25,12 +47,15 @@ interface ComplianceActionItem {
   date: string;
   icon: string;
   details: { label: string; value: string; icon?: string }[];
+  price?: number;
+  years?: number;
 }
 
 function TabPlaceholder({
   icon = 'exclamation-circle',
   title = 'Address Compliance',
   companyId,
+  onOpenRenewPage,
 }: TabPlaceholderProps) {
   const colors = useThemeColors();
   const token = useAppSelector(state => state.auth.token);
@@ -38,23 +63,25 @@ function TabPlaceholder({
   const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
   const [apiData, setApiData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const effectiveCompanyId = companyId ?? null;
 
   useEffect(() => {
     const fetchComplianceData = async () => {
-      if (!token) {
+      if (!token || !effectiveCompanyId) {
+        setApiData(null);
         setLoading(false);
         return;
       }
 
       setLoading(true);
       try {
-        const id = companyId;
-        const response = await axios.get(`${API_BASE_URL}/api/company-compliance/${id}`, {
+        const response = await axios.get(`${API_BASE_URL}/api/company-compliance/${effectiveCompanyId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             'x-auth-token': token,
           },
         });
+        // console.log("response ", response.data)
         setApiData(response?.data);
       } catch (error) {
         console.error('Error fetching compliance data:', error);
@@ -64,7 +91,7 @@ function TabPlaceholder({
     };
 
     fetchComplianceData();
-  }, [companyId, token]);
+  }, [effectiveCompanyId, token]);
 
   // सभी नए स्टेटस के लिए कलर्स थीम कॉन्फिगरेशन
   const getStatusTheme = (status: ComplianceActionItem['status']) => {
@@ -117,6 +144,24 @@ function TabPlaceholder({
 
   const derivedActions: ComplianceActionItem[] = [];
 
+  const shouldShowRenewButton = (action: ComplianceActionItem) => {
+    return action.status === 'Pending' || action.status === 'Expired';
+  };
+
+  const handleRenewPress = (action: ComplianceActionItem) => {
+    onOpenRenewPage?.({
+      id: action.id as RenewActionData['id'],
+      title: action.title,
+      subtitle: action.subtitle,
+      status: action.status,
+      date: action.date,
+      details: action.details,
+      companyId: effectiveCompanyId,
+      price: action.price,
+      years: action.years,
+    });
+  };
+
   // Agent Renewal
   derivedActions.push({
     id: 'resident',
@@ -149,7 +194,9 @@ function TabPlaceholder({
       { label: 'Country', value: addressData.country || 'Not set', icon: 'globe' },
       { label: 'Due Date', value: formatDate(addressData.dueDate), icon: 'calendar' },
       { label: 'Last Filed', value: formatDate(addressData.lastDate), icon: 'history' },
-    ]
+    ],
+    price: 99,
+    years: 1,
   });
 
   // Federal Filing
@@ -177,7 +224,9 @@ function TabPlaceholder({
     details: [
       { label: 'Due Date', value: formatDate(annualFilingData.dueDate), icon: 'calendar' },
       { label: 'Last Filed', value: formatDate(annualFilingData.lastDate), icon: 'history' },
-    ]
+    ],
+    price: 149,
+    years: 1,
   });
 
   // Stats Counters 
@@ -285,8 +334,18 @@ function TabPlaceholder({
                 </View>
 
                 <View style={styles.rightBadgeWrapper}>
-                  <View style={[styles.badgeWrap, { backgroundColor: theme.bg }]}>
-                    <Text style={[styles.badgeText, { color: theme.text }]}>{action.status}</Text>
+                  <View style={styles.statusRow}>
+                    <View style={[styles.badgeWrap, { backgroundColor: theme.bg }]}> 
+                      <Text style={[styles.badgeText, { color: theme.text }]}>{action.status}</Text>
+                    </View>
+                    {shouldShowRenewButton(action) ? (
+                      <Pressable
+                        onPress={() => handleRenewPress(action)}
+                        style={[styles.renewButton, { backgroundColor: colors.accent, marginLeft: 8 }]}
+                      >
+                        <Text style={[styles.renewButtonText, { color: '#ffffff' }]}>Renew Now</Text>
+                      </Pressable>
+                    ) : null}
                   </View>
                   <FontAwesome
                     name={isCurrentCardExpanded ? "chevron-up" : "chevron-down"}

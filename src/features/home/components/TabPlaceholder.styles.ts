@@ -168,6 +168,24 @@ export default StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
   },
+  renewButton: {
+    marginTop: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    minWidth: 84,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  renewButtonText: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   expandedDetails: {
     marginTop: 12,
   },
