@@ -1,39 +1,470 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   View,
+  Pressable,
+  TextInput,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../../../theme/colors';
+import { useAppSelector } from '../../../store/hooks';
 import type { CompanyCardItem } from './quickAccess/CompanyCard';
 import BackButton from '../../../components/buttons/BackButton';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import BasicInfoScreen from './changeCategories/BasicInfoScreen';
 
 type ManageCompanyScreenProps = {
   selectedCompany: CompanyCardItem | null;
   onBackPress: () => void;
 };
 
-const ManageCompanyScreen: React.FC<ManageCompanyScreenProps> = ({ selectedCompany, onBackPress }) => {
+type UrgencyLevel = 'low' | 'medium' | 'high';
+type ChangeCategory =
+  | 'basic'
+  | 'shareholder-director'
+  | 'local-address'
+  | 'local-representative';
+
+interface CategoryOption {
+  id: ChangeCategory;
+  label: string;
+  fields: number;
+  description: string;
+  icon: string;
+  color: string;
+}
+
+interface ChangeType {
+  id: UrgencyLevel;
+  label: string;
+  icon: string;
+  color: string;
+}
+
+const categories: CategoryOption[] = [
+  {
+    id: 'basic',
+    label: 'Company info',
+    fields: 2,
+    description: 'Company name, date',
+    icon: 'file-text',
+    color: '#4F46E5',
+  },
+  {
+    id: 'shareholder-director',
+    label: 'ShareHolder/Director',
+    fields: 8,
+    description: 'List, term, change leads',
+    icon: 'percent',
+    color: '#3B82F6',
+  },
+  {
+    id: 'local-address',
+    label: 'Local address',
+    fields: 25,
+    description: 'Resources, uplift',
+    icon: 'address-book',
+    color: '#F97316',
+  },
+  {
+    id: 'local-representative',
+    label: 'Local representative',
+    fields: 1,
+    description: 'End-on, change',
+    icon: 'calendar',
+    color: '#10B981',
+  },
+];
+
+const urgencyLevels: ChangeType[] = [
+  { id: 'low', label: 'low', icon: 'circle', color: '#22C55E' },
+  { id: 'medium', label: 'medium', icon: 'circle', color: '#F59E0B' },
+  { id: 'high', label: 'high', icon: 'circle', color: '#EF4444' },
+];
+
+const ManageCompanyScreen: React.FC<ManageCompanyScreenProps> = ({
+  selectedCompany,
+  onBackPress,
+}) => {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
+  const user = useAppSelector(state => state.auth.user);
 
+
+  const [selectedUrgency, setSelectedUrgency] = useState<UrgencyLevel>('low');
+  const [selectedCategories, setSelectedCategories] = useState<
+    ChangeCategory[]
+  >([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [openCategoryScreen, setOpenCategoryScreen] =
+    useState<ChangeCategory | null>(null);
+
+  const toggleCategory = (categoryId: ChangeCategory) => {
+    setSelectedCategories(prev =>
+      prev.includes(categoryId)
+        ? prev.filter(c => c !== categoryId)
+        : [...prev, categoryId],
+    );
+  };
+
+  const handleCategoryPress = (categoryId: ChangeCategory) => {
+    setOpenCategoryScreen('basic');
+  };
+
+  const handleCloseCategoryScreen = () => {
+    setOpenCategoryScreen(null);
+  };
+
+  // If a category screen is open, render it
+  if (openCategoryScreen === 'basic') {
+    return <BasicInfoScreen onBackPress={handleCloseCategoryScreen} />;
+  }
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-      <StatusBar barStyle={colors.mode === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={colors.background} />
-      
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom,
+        },
+      ]}
+    >
+      <StatusBar
+        barStyle={colors.mode === 'dark' ? 'light-content' : 'dark-content'}
+        backgroundColor={colors.background}
+      />
+
       {/* --- HEADER --- */}
-      <View style={[styles.header, { borderBottomColor: colors.border, backgroundColor: colors.background }]}>
+      <View
+        style={[
+          styles.header,
+          {
+            borderBottomColor: colors.border,
+            backgroundColor: colors.background,
+          },
+        ]}
+      >
         <BackButton onPress={onBackPress} />
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Manage Company</Text>
-        <View style={{ width: 40 }} />
+        <Text style={[styles.headerTitle, { color: colors.text }]}>
+          Request changes
+        </Text>
+        <View
+          style={[
+            styles.profileCard,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+          ]}
+        >
+          <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+            <Text style={styles.avatarText}>
+              {user?.email?.charAt(0).toUpperCase() ?? 'A'}
+            </Text>
+          </View>
+          <Text
+            style={[styles.profileEmail, { color: colors.muted }]}
+            numberOfLines={1}
+          >
+            {user?.email?.split('@')[0] ?? 'User'}
+          </Text>
+        </View>
       </View>
 
-      <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.emptyState}>
-          <Text style={[styles.emptyText, { color: colors.muted }]}>Manage features coming soon for {selectedCompany?.name ?? 'Company'}</Text>
+      <ScrollView
+        style={{ backgroundColor: colors.background }}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+    
+        <View>
+          <View style={styles.stepHeader}>
+            <Text style={[styles.stepLabel, { color: colors.muted }]}>
+              STEP 1 - CHANGE TYPE & URGENCY
+            </Text>
+          </View>
+
+          {/* Urgency Level Section */}
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Urgency level
+            </Text>
+            <View style={styles.urgencyGrid}>
+              {urgencyLevels.map(level => (
+                <Pressable
+                  key={level.id}
+                  onPress={() => setSelectedUrgency(level.id)}
+                  style={[
+                    styles.urgencyButton,
+                    {
+                      backgroundColor:
+                        selectedUrgency === level.id
+                          ? level.color + '20'
+                          : colors.surface,
+                      borderColor:
+                        selectedUrgency === level.id
+                          ? level.color
+                          : colors.border,
+                    },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.urgencyDot,
+                      { backgroundColor: level.color },
+                    ]}
+                  />
+                  <Text
+                    style={[
+                      styles.urgencyLabel,
+                      {
+                        color:
+                          selectedUrgency === level.id
+                            ? level.color
+                            : colors.text,
+                      },
+                    ]}
+                  >
+                    {level.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+
+          {/* Search Section */}
+          <View style={styles.section}>
+            <View
+              style={[
+                styles.searchBox,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <FontAwesome name="search" size={14} color={colors.muted} />
+              <TextInput
+                placeholder="Search for a specific change..."
+                placeholderTextColor={colors.inputPlaceholder}
+                style={[styles.searchInput, { color: colors.text }]}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+            </View>
+          </View>
+
+          {/* Change Categories Section */}
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Select Types
+            </Text>
+            <View style={styles.categoriesGrid}>
+              {categories.map(category => (
+                <Pressable
+                  key={category.id}
+                  onPress={() => {
+                    toggleCategory(category.id);
+                    handleCategoryPress(category.id);
+                  }}
+                  style={[
+                    styles.categoryCard,
+                    {
+                      backgroundColor: selectedCategories.includes(category.id)
+                        ? category.color + '15'
+                        : colors.surface,
+                      borderColor: selectedCategories.includes(category.id)
+                        ? category.color
+                        : colors.border,
+                    },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.categoryIcon,
+                      { backgroundColor: category.color + '20' },
+                    ]}
+                  >
+                    <FontAwesome
+                      name={category.icon as any}
+                      size={18}
+                      color={category.color}
+                    />
+                  </View>
+                  <Text style={[styles.categoryTitle, { color: colors.text }]}>
+                    {category.label}
+                  </Text>
+                  <Text
+                    style={[styles.categoryFields, { color: colors.muted }]}
+                  >
+                    {category.fields} fields
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+
+          {/* Share Transfer Form Section */}
+          <View>
+            {/* Share Transfer Form Section */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                Share transfer
+              </Text>
+            </View>
+
+            {/* Live Inquiry Feedback */}
+            <View
+              style={[
+                styles.feedbackBox,
+                {
+                  backgroundColor: colors.primary + '15',
+                  borderColor: colors.primary,
+                },
+              ]}
+            >
+              <View style={styles.feedbackIcon}>
+                <FontAwesome
+                  name="lightbulb-o"
+                  size={16}
+                  color={colors.primary}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.feedbackTitle, { color: colors.primary }]}>
+                  Live inquiry feedback
+                </Text>
+                <Text style={[styles.feedbackText, { color: colors.muted }]}>
+                  Selection logic: Transferring shares will automatically flag
+                  'Owner list update' as an associated field for review.
+                </Text>
+              </View>
+            </View>
+
+            {/* Live Request Timeline */}
+            <View style={styles.section}>
+              <View style={styles.timelineHeader}>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                  Live request timeline
+                </Text>
+                <Pressable
+                  style={[styles.refreshBtn, { borderColor: colors.primary }]}
+                >
+                  <FontAwesome
+                    name="refresh"
+                    size={12}
+                    color={colors.primary}
+                  />
+                  <Text style={[styles.refreshText, { color: colors.primary }]}>
+                    Refresh
+                  </Text>
+                </Pressable>
+              </View>
+
+              <Text style={[styles.timelineNote, { color: colors.muted }]}>
+                Each card shows exactly where your request stands.
+              </Text>
+
+              {/* Status Badges */}
+              <View style={styles.statusBadges}>
+                <View
+                  style={[
+                    styles.badge,
+                    {
+                      backgroundColor: '#F59E0B' + '20',
+                      borderColor: '#F59E0B',
+                    },
+                  ]}
+                >
+                  <FontAwesome name="circle" size={6} color="#F59E0B" />
+                  <Text style={[styles.badgeText, { color: '#F59E0B' }]}>
+                    Pending
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.badge,
+                    {
+                      backgroundColor: '#3B82F6' + '20',
+                      borderColor: '#3B82F6',
+                    },
+                  ]}
+                >
+                  <FontAwesome name="circle" size={6} color="#3B82F6" />
+                  <Text style={[styles.badgeText, { color: '#3B82F6' }]}>
+                    In progress
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.badge,
+                    {
+                      backgroundColor: '#EF4444' + '20',
+                      borderColor: '#EF4444',
+                    },
+                  ]}
+                >
+                  <FontAwesome name="circle" size={6} color="#EF4444" />
+                  <Text style={[styles.badgeText, { color: '#EF4444' }]}>
+                    Rejected
+                  </Text>
+                </View>
+              </View>
+
+              {/* Timeline Items */}
+              <View style={styles.timelineItems}>
+                {[
+                  {
+                    name: 'Name change',
+                    status: 'Completed',
+                    statusColor: '#10B981',
+                  },
+                  {
+                    name: 'Address',
+                    status: 'Completed',
+                    statusColor: '#10B981',
+                  },
+                  {
+                    name: 'Number',
+                    status: 'Completed',
+                    statusColor: '#10B981',
+                  },
+                ].map((item, idx) => (
+                  <View
+                    key={idx}
+                    style={[
+                      styles.timelineItem,
+                      { borderColor: colors.border },
+                    ]}
+                  >
+                    <FontAwesome name="flag" size={14} color={colors.muted} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.itemName, { color: colors.text }]}>
+                        {item.name}
+                      </Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.statusBadge,
+                        {
+                          backgroundColor: item.statusColor + '20',
+                          borderColor: item.statusColor,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[styles.statusText, { color: item.statusColor }]}
+                      >
+                        {item.status}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </View>
+
         </View>
       </ScrollView>
     </View>
@@ -51,28 +482,368 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: 50,
-    paddingBottom: 14,
+    paddingTop: 12,
+    paddingBottom: 12,
     borderBottomWidth: 1,
+    gap: 10,
   },
   headerTitle: {
+    flex: 1,
     fontSize: 16,
     fontWeight: '700',
   },
-  scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 30,
+  profileCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    gap: 6,
   },
-  emptyState: {
-    flex: 1,
+  avatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 60,
   },
-  emptyText: {
-    fontSize: 16,
+  avatarText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 11,
+  },
+  profileEmail: {
+    fontSize: 10,
+  },
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    paddingBottom: 30,
+  },
+  stepHeader: {
+    marginBottom: 20,
+  },
+  stepLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  backLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 12,
+  },
+  backLinkText: {
+    fontSize: 12,
     fontWeight: '500',
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  urgencyGrid: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  urgencyButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderRadius: 10,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  urgencyDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  urgencyLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 12,
+  },
+  categoriesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  categoryCard: {
+    width: '23%',
+    borderWidth: 1.5,
+    borderRadius: 8,
+    padding: 7,
+    alignItems: 'center',
+  },
+  categoryIcon: {
+    width: 26,
+    height: 26,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  categoryTitle: {
+    fontSize: 9,
+    fontWeight: '700',
     textAlign: 'center',
+    marginBottom: 2,
+  },
+  categoryFields: {
+    fontSize: 8,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  nextButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
+    paddingVertical: 14,
+    marginTop: 20,
+    gap: 8,
+  },
+  nextButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  selectedList: {
+    gap: 10,
+  },
+  selectedItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 12,
+  },
+  selectedItemName: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  selectedItemMeta: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  fieldsList: {
+    gap: 10,
+  },
+  fieldItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    gap: 12,
+  },
+  checkbox: {
+    width: 18,
+    height: 18,
+    borderWidth: 1.5,
+    borderRadius: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fieldLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  submitButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
+    paddingVertical: 14,
+    marginTop: 20,
+    gap: 8,
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  formGroup: {
+    marginBottom: 14,
+  },
+  label: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  dropdown: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  dropdownText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  input: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 12,
+  },
+  dateField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  dateText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  feedbackBox: {
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    gap: 10,
+    marginBottom: 20,
+    alignItems: 'flex-start',
+  },
+  feedbackIcon: {
+    marginTop: 2,
+  },
+  feedbackTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  feedbackText: {
+    fontSize: 11,
+    lineHeight: 15,
+  },
+  timelineHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  refreshBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    gap: 4,
+  },
+  refreshText: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  timelineNote: {
+    fontSize: 11,
+    marginBottom: 12,
+    lineHeight: 15,
+  },
+  statusBadges: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 14,
+    flexWrap: 'wrap',
+  },
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    gap: 4,
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  timelineItems: {
+    gap: 10,
+  },
+  timelineItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 10,
+  },
+  itemName: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  statusBadge: {
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  statusText: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  auditNote: {
+    fontSize: 11,
+    marginBottom: 12,
+    lineHeight: 15,
+  },
+  auditItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    gap: 10,
+    marginBottom: 12,
+  },
+  auditTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  auditDesc: {
+    fontSize: 10,
+  },
+  auditFooter: {
+    fontSize: 10,
+    lineHeight: 14,
   },
 });
