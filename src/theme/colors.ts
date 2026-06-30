@@ -43,7 +43,7 @@ export const appThemes = {
     inputBackground: '#020617',
     inputText: '#f8fafc',
     inputPlaceholder: '#94a3b8',
-    primary: '#2dd4bf',
+    primary: '#abcec8',
     primaryText: '#042f2e',
     accent: '#5eead4',
     accentSoft: '#134e4a',

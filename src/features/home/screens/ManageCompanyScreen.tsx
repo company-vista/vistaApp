@@ -119,8 +119,22 @@ const ManageCompanyScreen: React.FC<ManageCompanyScreenProps> = ({
   };
 
   // If a category screen is open, render it
-  if (openCategoryScreen === 'basic') {
-    return <BasicInfoScreen onBackPress={handleCloseCategoryScreen} />;
+ if (openCategoryScreen === 'basic') {
+    const companyData = selectedCompany as any;
+    const userData = user as any;
+
+    const companyClientId = companyData?.shareholders?.[0]?.clientId || userData?._id || userData?.id || "";
+    const finalCompanyId = companyData?.id || companyData?._id || "";
+
+    return (
+      <BasicInfoScreen 
+        onBackPress={handleCloseCategoryScreen} 
+        companyId={finalCompanyId}
+        clientId={companyClientId}
+        urgency={selectedUrgency}
+        selectedCategory={openCategoryScreen}
+      />
+    );
   }
   return (
     <View
@@ -181,7 +195,10 @@ const ManageCompanyScreen: React.FC<ManageCompanyScreenProps> = ({
         <View>
           <View style={styles.stepHeader}>
             <Text style={[styles.stepLabel, { color: colors.muted }]}>
-              STEP 1 - CHANGE TYPE & URGENCY
+              Submit changes for{' '}
+              <Text style={{ color: colors.primary, fontWeight: '700' }}>
+                {selectedCompany?.name ?? 'Company'}
+              </Text>
             </Text>
           </View>
 
@@ -485,7 +502,7 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    gap: 10,
+    gap: 3,
   },
   headerTitle: {
     flex: 1,
@@ -525,10 +542,10 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   stepLabel: {
-    fontSize: 11,
+    fontSize: 14,
     fontWeight: '600',
     letterSpacing: 0.5,
-    textTransform: 'uppercase',
+    textTransform: 'none',
   },
   backLink: {
     flexDirection: 'row',

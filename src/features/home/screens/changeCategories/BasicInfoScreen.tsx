@@ -1,18 +1,31 @@
 import React, { useState } from 'react';
-import { BackButton } from '../../../../components/buttons';
-import { useThemeColors } from '../../../../theme/colors';
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-  StyleSheet,
-  SafeAreaView,
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  SafeAreaView,
+  ScrollView,
   StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+import axios from 'axios'; // Ensure axios is installed
+import { BackButton } from '../../../../components/buttons';
+import { useThemeColors } from '../../../../theme/colors';
+import {API_BASE_URL} from '../../../../config/api'; // Ensure this path is correct
+
+// Dummy/Placeholder for toast if you haven't configured one. 
+// Replace this with your actual toast library (e.g., react-native-toast-message)
+const toast = {
+  error: (msg: string) => console.log("Toast Error:", msg),
+  success: (msg: string) => console.log("Toast Success:", msg),
+};
+
+// API Base URL Constant (Replace with your actual config or env variable)
+// const API_BASE_URL = 'https://your-api-url.com';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -73,15 +86,13 @@ interface ThemeColors {
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const FIELDS: Field[] = [
-  { key: 'name', label: 'Company name', shortLabel: 'Company' },
-  { key: 'alt', label: 'Alternate name', shortLabel: 'Alternate' },
-  { key: 'reg', label: 'Registration number', shortLabel: 'Reg. No.' },
+  { key: 'name', label: 'Company name', shortLabel: 'Company name' },
   { key: 'web', label: 'Company website', shortLabel: 'Website' },
   { key: 'act', label: 'Principal activity', shortLabel: 'Activity' },
-  { key: 'intro', label: 'Company introduction', shortLabel: 'Intro' },
+  { key: 'intro', label: 'Company introduction', shortLabel: 'Introduction' },
   { key: 'sh', label: 'Shareholders / Directors', shortLabel: 'Holders' },
   { key: 'addr', label: 'Local address', shortLabel: 'Address' },
-  { key: 'rep', label: 'Local representative', shortLabel: 'Rep' },
+  { key: 'rep', label: 'Local representative', shortLabel: 'Representative' },
 ];
 
 const INITIAL_SHAREHOLDER: ShareholderForm = {
@@ -183,14 +194,25 @@ const FormField: React.FC<FormFieldProps> = ({
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 interface BasicInfoScreenProps {
-  onBackPress?: () => void;
+ onBackPress: () => void;
+  companyId: string | undefined;
+  clientId: string | undefined;
+  urgency: 'low' | 'medium' | 'high';
+  selectedCategory: string | null;
 }
 
-const BasicInfoScreen: React.FC<BasicInfoScreenProps> = ({ onBackPress }) => {
+const BasicInfoScreen: React.FC<BasicInfoScreenProps> = ({ 
+  onBackPress, 
+  companyId, 
+  clientId, 
+  urgency,
+  selectedCategory
+}) => {
   const colors = useThemeColors();
   const [selected, setSelected] = useState<Set<FieldKey>>(new Set());
   const [formValues, setFormValues] = useState<FormValues>(INITIAL_FORM);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false); // Added for loader state
 
   const totalCount = FIELDS.length;
   const selectedCount = selected.size;
@@ -223,8 +245,42 @@ const BasicInfoScreen: React.FC<BasicInfoScreenProps> = ({ onBackPress }) => {
     }));
   };
 
-  const handleSubmit = () => {
-    setSubmitted(true);
+  // Integrated and customized handleSubmit function
+  const handleSubmit = async () => {
+    // 1. Validation check for selected fields
+    if (selected.size === 0) {
+      toast.error("Please select at least one field to change.");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      
+      // Preparing payload according to selected values
+      const fieldsArray = Array.from(selected);
+      
+      await axios.post(`${API_BASE_URL}/api/change-requests`, {
+        companyId,
+        clientId,
+        type: 'basic_info',
+        fields: fieldsArray,
+        requestedChanges: formValues, // Sending form values inside requested changes
+        shareholderData: selected.has('sh') ? formValues.sh : undefined,
+      }, { withCredentials: true });
+      console.log(fieldsArray, formValues); // Debugging log
+      toast.success("Request submitted successfully");
+      
+      // Reset state on successful submission
+      setFormValues(INITIAL_FORM);
+      setSelected(new Set());
+      setSubmitted(true);
+      
+     
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to submit your request.");
+    } finally { 
+      setSubmitting(false); 
+    }
   };
 
   if (submitted) {
@@ -238,18 +294,16 @@ const BasicInfoScreen: React.FC<BasicInfoScreenProps> = ({ onBackPress }) => {
           <Text style={styles(colors).successIcon}>✓</Text>
           <Text style={styles(colors).successTitle}>Update submitted</Text>
           <Text style={styles(colors).successSub}>
-            {selectedCount} field{selectedCount !== 1 ? 's' : ''} updated successfully.
+            Your change request has been sent to the admin team.
           </Text>
           <TouchableOpacity
             style={styles(colors).successBtn}
             onPress={() => {
               setSubmitted(false);
-              setSelected(new Set());
-              setFormValues(INITIAL_FORM);
               onBackPress?.();
             }}
           >
-            <Text style={styles(colors).successBtnText}>Start over</Text>
+            <Text style={styles(colors).successBtnText}>Go Back</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -510,8 +564,13 @@ const BasicInfoScreen: React.FC<BasicInfoScreenProps> = ({ onBackPress }) => {
                 style={styles(colors).submitBtn}
                 onPress={handleSubmit}
                 activeOpacity={0.8}
+                disabled={submitting} // Disable button when submitting
               >
-                <Text style={styles(colors).submitBtnText}>Submit update</Text>
+                {submitting ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles(colors).submitBtnText}>Submit update</Text>
+                )}
               </TouchableOpacity>
             </View>
           )}
@@ -534,7 +593,7 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
   scrollContent: {
     padding: 14,
     paddingBottom: 40,
-    marginTop: 70
+    marginTop: 40
   },
 
   // Header
@@ -582,7 +641,6 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
     elevation: 2,
   },
   chipSelected: {
-    backgroundColor: colors.primary + '20',
     borderColor: colors.primary,
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 2 },
@@ -634,6 +692,7 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
     paddingVertical: 11,
     fontSize: 13,
     color: colors.text,
+    opacity: 0.5,
     backgroundColor: colors.surface,
   },
   fieldInputMulti: {
